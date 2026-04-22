@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VA Newbies PH — Rate Your Client</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3e;
+    --accent: #7c5cfc;
+    --accent2: #c05cfc;
+    --gold: #f0b429;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+  }
+
+  .header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+  }
+  .logo-pill {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 999px;
+  }
+
+  .container { max-width: 680px; margin: 0 auto; padding: 32px 20px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+  .card-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .card-sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+
+  .client-profile {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .client-avatar {
+    width: 50px; height: 50px;
+    background: linear-gradient(135deg, #f0b429, #ef9f10);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 800; color: white; flex-shrink: 0;
+  }
+  .client-name { font-size: 16px; font-weight: 700; }
+  .client-meta { color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  @media (max-width: 500px) { .info-grid { grid-template-columns: 1fr; } }
+  .info-item { padding: 12px 16px; background: var(--surface2); border-radius: 8px; border: 1px solid var(--border); }
+  .info-item-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .info-item-val { font-size: 14px; font-weight: 600; }
+
+  .rating-group { margin-bottom: 22px; }
+  .rating-label {
+    font-size: 13px; font-weight: 600; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .rating-desc { font-size: 12px; color: var(--muted); font-weight: 400; margin-bottom: 8px; }
+  .stars { display: flex; gap: 6px; }
+  .star { font-size: 28px; cursor: pointer; transition: transform 0.15s; opacity: 0.3; line-height: 1; }
+  .star.active { opacity: 1; transform: scale(1.1); }
+  .star:hover { opacity: 0.8; }
+
+  .yesno { display: flex; gap: 10px; }
+  .yesno-btn {
+    flex: 1; padding: 12px; border-radius: 8px; border: 2px solid var(--border);
+    background: var(--surface2); color: var(--muted); font-weight: 600; font-size: 14px;
+    cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .yesno-btn.yes.active { border-color: var(--green); background: rgba(34,197,94,0.15); color: var(--green); }
+  .yesno-btn.no.active { border-color: var(--red); background: rgba(239,68,68,0.15); color: var(--red); }
+
+  textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px; color: var(--text); font-size: 13px;
+    resize: vertical; min-height: 100px; outline: none; font-family: inherit; line-height: 1.6;
+  }
+  textarea:focus { border-color: var(--accent); }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  .btn-primary {
+    width: 100%; padding: 14px 28px; border-radius: 8px; border: none;
+    font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s;
+    background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white;
+    margin-top: 4px;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .alert {
+    padding: 14px 18px; border-radius: 8px; font-size: 13px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .alert.success { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); color: var(--green); }
+  .alert.info { background: rgba(124,92,252,0.1); border: 1px solid rgba(124,92,252,0.3); color: #a08cfc; }
+  .alert.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--red); }
+
+  .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; gap: 16px; }
+  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .success-screen { text-align: center; padding: 60px 20px; }
+  .success-icon { font-size: 64px; margin-bottom: 20px; }
+  .success-screen h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+  .success-screen p { color: var(--muted); font-size: 15px; line-height: 1.6; max-width: 400px; margin: 0 auto; }
+
+  /* TASKS DONE SUMMARY */
+  .task-summary-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; background: var(--surface2); border-radius: 8px;
+    border: 1px solid var(--border); margin-bottom: 8px; font-size: 13px;
+  }
+  .task-pill-sm {
+    font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+  }
+  .pill-done { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .pill-not { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .pill-pending { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+  /* PENDING NOTICE */
+  .pending-wall {
+    text-align: center; padding: 40px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .pending-icon { font-size: 48px; margin-bottom: 16px; }
+  .pending-wall h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .pending-wall p { color: var(--muted); font-size: 13px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-pill">VA Newbies PH</div>
+  <div>
+    <h1 style="font-size:16px;font-weight:600">VA Feedback Form</h1>
+    <span style="color:var(--muted);font-size:13px">Rate your client after the 3-week term</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div id="loadingView" class="loading">
+    <div class="spinner"></div>
+    <p style="color:var(--muted)">Loading your pairing…</p>
+  </div>
+
+  <div id="errorView" style="display:none">
+    <div class="alert error">⚠️ <span id="errorMsg">Pairing not found.</span></div>
+  </div>
+
+  <div id="pendingWall" style="display:none">
+    <div class="pending-wall">
+      <div class="pending-icon">⏳</div>
+      <h3>Not Ready Yet</h3>
+      <p>Your client must submit their feedback first before you can rate them. Check back once they've done their part!</p>
+      <p style="margin-top:16px;font-size:12px;color:var(--muted)">Pairing ends: <strong id="pendingEndDate" style="color:var(--text)">—</strong></p>
+    </div>
+  </div>
+
+  <div id="alreadyDoneView" style="display:none" class="alert success">
+    ✅ You already submitted your feedback for this pairing. Thank you!
+  </div>
+
+  <div id="mainView" style="display:none">
+
+    <div class="card">
+      <div class="card-title">👤 Your Client</div>
+      <div class="card-sub">Here's who you were paired with for this 3-week engagement.</div>
+
+      <div class="client-profile">
+        <div class="client-avatar" id="clientInitials">?</div>
+        <div>
+          <div class="client-name" id="clientName">—</div>
+          <div class="client-meta" id="clientMeta">—</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-item-label">Engagement Period</div>
+          <div class="info-item-val" id="periodVal">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item-label">Tasks Assigned</div>
+          <div class="info-item-val" id="taskCountVal">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item-label">Client's Rating of You</div>
+          <div class="info-item-val" id="clientRatingOfYou">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item-label">Client Wants to Continue?</div>
+          <div class="info-item-val" id="clientContinue">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task summary from client -->
+    <div class="card" id="taskSummaryCard">
+      <div class="card-title">📋 Task Summary</div>
+      <div class="card-sub">Here's how the client marked each task.</div>
+      <div id="taskSummaryList"></div>
+    </div>
+
+    <!-- VA rates the client -->
+    <div class="card">
+      <div class="card-title">⭐ Rate Your Client</div>
+      <div class="card-sub">Your honest rating helps Coach Di match better in future pairings. Clients cannot see your individual scores — only the aggregate.</div>
+
+      <div class="rating-group">
+        <div class="rating-label">Overall Experience <span id="rateOverallVal" style="color:var(--gold)"></span></div>
+        <div class="rating-desc">How was your overall experience working with this client?</div>
+        <div class="stars" data-key="overall" onclick="setRating(this)">
+          <span class="star" data-val="1">⭐</span>
+          <span class="star" data-val="2">⭐</span>
+          <span class="star" data-val="3">⭐</span>
+          <span class="star" data-val="4">⭐</span>
+          <span class="star" data-val="5">⭐</span>
+        </div>
+      </div>
+
+      <div class="rating-group">
+        <div class="rating-label">Communication <span id="rateCommVal" style="color:var(--gold)"></span></div>
+        <div class="rating-desc">Did they communicate clearly and on time?</div>
+        <div class="stars" data-key="communication" onclick="setRating(this)">
+          <span class="star" data-val="1">⭐</span>
+          <span class="star" data-val="2">⭐</span>
+          <span class="star" data-val="3">⭐</span>
+          <span class="star" data-val="4">⭐</span>
+          <span class="star" data-val="5">⭐</span>
+        </div>
+      </div>
+
+      <div class="rating-group">
+        <div class="rating-label">Responsiveness <span id="rateRespVal" style="color:var(--gold)"></span></div>
+        <div class="rating-desc">Did they respond to messages and requests promptly?</div>
+        <div class="stars" data-key="responsiveness" onclick="setRating(this)">
+          <span class="star" data-val="1">⭐</span>
+          <span class="star" data-val="2">⭐</span>
+          <span class="star" data-val="3">⭐</span>
+          <span class="star" data-val="4">⭐</span>
+          <span class="star" data-val="5">⭐</span>
+        </div>
+      </div>
+
+      <div class="rating-group">
+        <div class="rating-label">Clarity of Instructions <span id="rateClarVal" style="color:var(--gold)"></span></div>
+        <div class="rating-desc">Were the tasks and expectations explained clearly?</div>
+        <div class="stars" data-key="clarity" onclick="setRating(this)">
+          <span class="star" data-val="1">⭐</span>
+          <span class="star" data-val="2">⭐</span>
+          <span class="star" data-val="3">⭐</span>
+          <span class="star" data-val="4">⭐</span>
+          <span class="star" data-val="5">⭐</span>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="rating-group">
+        <div class="rating-label" style="margin-bottom:12px">Would you work with this client again?</div>
+        <div class="yesno">
+          <div class="yesno-btn yes" onclick="setYesNo(true, this)">👍 Yes, definitely</div>
+          <div class="yesno-btn no" onclick="setYesNo(false, this)">👎 Probably not</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Additional Comments <span style="color:var(--muted);font-weight:400">(optional)</span></div>
+      <textarea id="vaComments" placeholder="Share anything that would help Coach Di improve future matchings…"></textarea>
+    </div>
+
+    <button class="btn-primary" onclick="submitVAFeedback()" id="submitBtn">Submit My Feedback 🚀</button>
+
+  </div>
+
+  <div id="successView" class="success-screen" style="display:none">
+    <div class="success-icon">🌟</div>
+    <h2>Feedback Submitted!</h2>
+    <p>Salamat! Your rating has been saved. Coach Di will review the results and reach out if there's any follow-up.</p>
+    <p style="margin-top:16px;font-size:13px">Keep an eye on your portal for new pairing opportunities! 🚀</p>
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let pairingId = null;
+let pairing = null;
+let ratings = { overall: 0, communication: 0, responsiveness: 0, clarity: 0 };
+let workAgain = null;
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const params = new URLSearchParams(window.location.search);
+  pairingId = params.get('pid');
+
+  if (!pairingId) {
+    show('errorView'); hide('loadingView');
+    document.getElementById('errorMsg').textContent = 'No pairing ID found. Please contact Coach Di.';
+    return;
+  }
+  await loadPairing();
+});
+
+async function loadPairing() {
+  const { data: p, error } = await sb.from('pairings').select(`
+    *, 
+    clients(id, full_name, company, email),
+    members(id, full_name)
+  `).eq('id', pairingId).single();
+
+  if (error || !p) {
+    show('errorView'); hide('loadingView');
+    document.getElementById('errorMsg').textContent = 'Pairing not found.';
+    return;
+  }
+  pairing = p;
+
+  // Check if VA already submitted
+  const { data: existingVAFeedback } = await sb.from('va_feedback').select('id').eq('pairing_id', pairingId).single();
+  if (existingVAFeedback) {
+    show('alreadyDoneView'); hide('loadingView');
+    return;
+  }
+
+  // Check if client submitted feedback first (required)
+  const { data: clientFeedback } = await sb.from('client_feedback').select('*').eq('pairing_id', pairingId).single();
+
+  // Check if term is over
+  const now = new Date();
+  const endDate = new Date(pairing.end_date);
+  const termOver = now >= endDate;
+
+  if (!clientFeedback || !termOver) {
+    document.getElementById('pendingEndDate').textContent = formatDate(pairing.end_date);
+    show('pendingWall'); hide('loadingView');
+    return;
+  }
+
+  // All good — render
+  renderPage(clientFeedback);
+  hide('loadingView');
+  show('mainView');
+}
+
+async function renderPage(clientFeedback) {
+  const client = pairing.clients;
+  const initials = (client?.full_name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  document.getElementById('clientInitials').textContent = initials;
+  document.getElementById('clientName').textContent = client?.full_name || '—';
+  document.getElementById('clientMeta').textContent = [client?.company, client?.email].filter(Boolean).join(' · ');
+
+  document.getElementById('periodVal').textContent = `${formatDate(pairing.start_date)} – ${formatDate(pairing.end_date)}`;
+
+  if (clientFeedback) {
+    const avg = ((clientFeedback.overall_rating + clientFeedback.communication_rating + clientFeedback.quality_rating + clientFeedback.reliability_rating) / 4).toFixed(1);
+    document.getElementById('clientRatingOfYou').textContent = `⭐ ${avg} / 5`;
+    document.getElementById('clientContinue').textContent = clientFeedback.would_continue ? '✅ Yes' : '❌ Not right now';
+  }
+
+  // Load tasks
+  const { data: tasks } = await sb.from('pairing_tasks').select(`*, task_categories(name, icon)`).eq('pairing_id', pairingId);
+  document.getElementById('taskCountVal').textContent = `${tasks?.length || 0} task(s)`;
+
+  const taskList = document.getElementById('taskSummaryList');
+  if (tasks?.length) {
+    taskList.innerHTML = tasks.map(t => {
+      const name = t.task_categories ? `${t.task_categories.icon} ${t.task_categories.name}` : `📝 ${t.custom_task}`;
+      const pillClass = t.status === 'done' ? 'pill-done' : t.status === 'not_done' ? 'pill-not' : 'pill-pending';
+      const pillLabel = t.status === 'done' ? '✔ Done' : t.status === 'not_done' ? '✘ Not Done' : '⏳ Pending';
+      return `<div class="task-summary-row">
+        <span>${name}</span>
+        <span class="task-pill-sm ${pillClass}">${pillLabel}</span>
+      </div>`;
+    }).join('');
+  } else {
+    taskList.innerHTML = '<p style="color:var(--muted);font-size:13px">No tasks recorded.</p>';
+  }
+}
+
+function setRating(starsEl) {
+  const key = starsEl.dataset.key;
+  const clicked = event.target.closest('.star');
+  if (!clicked) return;
+  const val = parseInt(clicked.dataset.val);
+  ratings[key] = val;
+
+  starsEl.querySelectorAll('.star').forEach(s => {
+    s.classList.toggle('active', parseInt(s.dataset.val) <= val);
+  });
+
+  const labelMap = { overall: 'rateOverallVal', communication: 'rateCommVal', responsiveness: 'rateRespVal', clarity: 'rateClarVal' };
+  const labels = ['', '😞 Poor', '😐 Fair', '🙂 Good', '😊 Great', '🤩 Excellent'];
+  if (labelMap[key]) document.getElementById(labelMap[key]).textContent = labels[val] || '';
+}
+
+function setYesNo(val, btn) {
+  workAgain = val;
+  btn.parentElement.querySelectorAll('.yesno-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function submitVAFeedback() {
+  if (!ratings.overall) { alert('Please rate your overall experience.'); return; }
+  if (!ratings.communication) { alert('Please rate communication.'); return; }
+  if (!ratings.responsiveness) { alert('Please rate responsiveness.'); return; }
+  if (!ratings.clarity) { alert('Please rate clarity of instructions.'); return; }
+  if (workAgain === null) { alert('Please answer if you would work with this client again.'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+
+  const { error } = await sb.from('va_feedback').insert({
+    pairing_id: pairingId,
+    overall_rating: ratings.overall,
+    communication_rating: ratings.communication,
+    responsiveness_rating: ratings.responsiveness,
+    clarity_rating: ratings.clarity,
+    would_work_again: workAgain,
+    comments: document.getElementById('vaComments').value.trim() || null
+  });
+
+  if (error) { alert('Error submitting. Please try again.'); btn.disabled = false; btn.textContent = 'Submit My Feedback 🚀'; return; }
+
+  hide('mainView');
+  show('successView');
+}
+
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+function formatDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+</script>
+</body>
+</html>
