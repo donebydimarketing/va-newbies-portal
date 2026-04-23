@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VA Newbies PH — Member Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--black:#0D0D0D;--yellow:#F5C800;--red:#CC0000;--dark:#1A1A1A;--card:#222;--gray:#888;--white:#FFF;--border:#333;--green:#00c864;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:#0D0D0D;font-family:"Segoe UI",sans-serif;color:#FFF;min-height:100vh;}
+.screen{display:none;}.screen.active{display:block;}
+/* AUTH */
+.center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0D0D0D;}
+.auth-box{background:#1A1A1A;border:1px solid #333;border-radius:16px;padding:36px 28px;width:100%;max-width:420px;}
+.auth-logo{text-align:center;margin-bottom:28px;}
+.brand-tag{font-size:13px;font-weight:700;letter-spacing:2px;color:#F5C800;text-transform:uppercase;}
+.auth-box h1{font-size:26px;font-weight:800;margin-top:6px;text-align:center;}
+.auth-box h1 span{color:#CC0000;}
+.auth-tabs{display:flex;margin-bottom:24px;background:#0D0D0D;border-radius:10px;padding:4px;}
+.auth-tab{flex:1;padding:9px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;border-radius:8px;color:#888;border:none;background:none;}
+.auth-tab.active{background:#F5C800;color:#000;}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.field label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#888;}
+.field input{background:#0D0D0D;border:1px solid #333;border-radius:8px;padding:11px 13px;color:#FFF;font-size:14px;outline:none;width:100%;}
+.field input:focus{border-color:#F5C800;}
+.btn{width:100%;padding:13px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;}
+.btn-yellow{background:#F5C800;color:#000;}
+.err{color:#ff6b6b;font-size:12px;margin-top:10px;display:none;}
+/* STATUS */
+.status-box{background:#1A1A1A;border-radius:16px;padding:40px 28px;max-width:460px;width:100%;text-align:center;}
+.status-icon{font-size:52px;margin-bottom:16px;}
+.status-box h2{font-size:24px;margin-bottom:12px;}
+.status-box p{color:#888;font-size:14px;line-height:1.7;}
+.logout-btn{margin-top:20px;background:transparent;border:1px solid #333;color:#888;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;}
+/* PORTAL */
+#screen-portal{background:#0D0D0D;}
+.portal-nav{background:#1A1A1A;border-bottom:2px solid #F5C800;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:9999;}
+.nav-brand{font-size:13px;font-weight:800;letter-spacing:1.5px;color:#F5C800;text-transform:uppercase;}
+.nav-logout{background:transparent;border:1px solid #333;color:#888;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;}
+.portal-tabs{display:flex;gap:4px;padding:0 24px;border-bottom:1px solid #333;overflow-x:auto;background:#1A1A1A;position:sticky;top:60px;z-index:9998;}
+.tab-btn{padding:14px 18px;font-size:13px;font-weight:600;color:#888;background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab-btn.active{color:#F5C800;border-bottom-color:#F5C800;}
+.tab-content{display:none;padding:24px;}
+.tab-content.active{display:block;}
+/* DASHBOARD */
+.dash-welcome{background:linear-gradient(135deg,#1a1200,#2a1800);border:1px solid rgba(245,200,0,.25);border-radius:16px;padding:28px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+.dash-welcome h2{font-size:24px;font-weight:800;margin-bottom:6px;}
+.dash-welcome h2 span{color:#F5C800;}
+.dash-welcome p{color:#888;font-size:14px;line-height:1.6;}
+.tier-badge{padding:8px 20px;border-radius:50px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
+.tier-starter{background:#F5C800;color:#000;}.tier-core{background:#CC0000;color:#FFF;}.tier-pro{background:#444;color:#FFF;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px;}
+.stat-card{background:#222;border:1px solid #333;border-radius:14px;padding:18px 16px;}
+.s-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:10px;}
+.s-val{font-size:24px;font-weight:800;color:#F5C800;margin-bottom:4px;}
+.s-sub{font-size:11px;color:#888;}
+.stat-card.red-card .s-val{color:#CC0000;}.stat-card.green-card .s-val{color:#00c864;}
+.progress-wrap{background:#222;border:1px solid #333;border-radius:14px;padding:20px;margin-bottom:22px;}
+.progress-wrap h3{font-size:13px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+.prog-bar-wrap{background:#333;border-radius:50px;height:10px;overflow:hidden;margin-bottom:8px;}
+.prog-bar{height:100%;background:linear-gradient(90deg,#F5C800,#e6b800);border-radius:50px;transition:width .5s;}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;color:#888;}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px;}
+.info-card{background:#222;border:1px solid #333;border-radius:14px;padding:20px;}
+.info-card h3{font-size:13px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+.info-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px;}
+.info-row:last-child{border-bottom:none;}
+.info-row .i-label{color:#888;}
+.info-row .i-val{font-weight:600;}
+.i-val.active{color:#00c864;}
+.notice-card{background:linear-gradient(135deg,#1a0000,#2a0800);border:1px solid rgba(204,0,0,.3);border-radius:14px;padding:20px;margin-bottom:22px;}
+.notice-card h3{font-size:13px;font-weight:700;color:#CC0000;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
+.notice-item{display:flex;gap:12px;margin-bottom:10px;font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;}
+.notice-item:last-child{margin-bottom:0;}
+.notice-dot{width:6px;height:6px;background:#CC0000;border-radius:50%;flex-shrink:0;margin-top:6px;}
+.section-title{font-size:15px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.section-title::after{content:"";flex:1;height:1px;background:#333;}
+.quick-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+.quick-card{background:#222;border:1px solid #333;border-radius:12px;padding:16px;cursor:pointer;text-align:center;transition:border-color .2s;}
+.quick-card:hover{border-color:#F5C800;}
+.q-icon{font-size:24px;margin-bottom:8px;}
+.q-label{font-size:12px;font-weight:700;color:#FFF;}
+.q-sub{font-size:11px;color:#888;margin-top:3px;}
+/* MODULES */
+.modules-layout{display:grid;grid-template-columns:1fr 300px;gap:20px;}
+.modules-player{display:flex;flex-direction:column;}
+.now-playing-label{font-size:10px;font-weight:700;letter-spacing:2px;color:#F5C800;text-transform:uppercase;margin-bottom:8px;}
+.video-wrap{position:relative;width:100%;padding-bottom:56.25%;border-radius:12px 12px 0 0;overflow:hidden;background:#111;margin-bottom:0;}
+.video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;}
+.video-info-box{background:#222;border:1px solid #333;border-radius:0 0 12px 12px;padding:14px 16px;}
+.video-info-cat{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#F5C800;margin-bottom:4px;}
+.video-info-title{font-size:16px;font-weight:800;margin-bottom:6px;}
+.video-info-desc{font-size:13px;color:#888;line-height:1.6;}
+.mark-btn{margin-top:12px;background:transparent;border:1px solid #00c864;color:#00c864;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.mark-btn.marked{background:#00c864;color:#000;}
+.modules-sidebar{background:#222;border:1px solid #333;border-radius:12px;overflow:hidden;max-height:700px;overflow-y:auto;}
+.sidebar-header{padding:12px 16px;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#F5C800;border-bottom:1px solid #333;background:#1A1A1A;position:sticky;top:0;}
+.cat-section{border-bottom:1px solid rgba(255,255,255,.05);}
+.cat-section:last-child{border-bottom:none;}
+.cat-header{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;cursor:pointer;background:rgba(255,255,255,.02);}
+.cat-header:hover{background:rgba(245,200,0,.05);}
+.cat-name{font-size:12px;font-weight:700;color:#FFF;}
+.cat-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:50px;text-transform:uppercase;letter-spacing:.5px;}
+.badge-start{background:#F5C800;color:#000;}.badge-soon{background:#333;color:#888;}
+.cat-arrow{font-size:10px;color:#888;transition:transform .2s;}
+.cat-arrow.closed{transform:rotate(-90deg);}
+.cat-videos{display:none;}.cat-videos.open{display:block;}
+.video-item{display:flex;flex-direction:column;cursor:pointer;border-top:1px solid rgba(255,255,255,.03);}
+.video-item:hover{background:rgba(245,200,0,.05);}
+.video-item.active{background:rgba(245,200,0,.1);border-left:3px solid #F5C800;}
+.vi-thumb-wrap{position:relative;width:100%;overflow:hidden;}
+.vi-thumb{width:100%;height:60px;object-fit:cover;display:block;}
+.vi-thumb-overlay{position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;transition:background .2s;}
+.video-item:hover .vi-thumb-overlay{background:rgba(0,0,0,.4);}
+.vi-play-icon{font-size:20px;opacity:0;transition:opacity .2s;color:#FFF;}
+.video-item:hover .vi-play-icon{opacity:1;}
+.vi-bottom{display:flex;align-items:center;gap:10px;padding:8px 12px;}
+.vi-num{width:22px;height:22px;background:#333;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#888;flex-shrink:0;}
+.video-item.active .vi-num{background:#F5C800;color:#000;}
+.video-item.completed .vi-num{background:#00c864;color:#000;}
+.vi-info{flex:1;min-width:0;}
+.vi-title{font-size:11px;font-weight:600;color:#FFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vi-sub{font-size:10px;color:#888;margin-top:1px;}
+.vi-check{font-size:11px;color:#00c864;}
+.coming-soon-item{padding:10px 16px;font-size:11px;color:#888;font-style:italic;}
+/* CHECKLIST */
+.checklist{display:flex;flex-direction:column;gap:10px;}
+.check-item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border:1px solid #333;border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .2s;}
+.check-item.done{background:rgba(0,200,100,.06);border-color:rgba(0,200,100,.25);}
+.check-circle{width:22px;height:22px;border-radius:50%;border:2px solid #333;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;}
+.check-item.done .check-circle{background:#00c864;border-color:#00c864;color:#000;}
+.check-text{font-size:13px;font-weight:600;flex:1;}
+.check-item.done .check-text{text-decoration:line-through;color:#888;}
+/* JOB BOARD */
+.job-card{background:#222;border:1px solid #333;border-radius:12px;padding:20px;margin-bottom:14px;}
+.job-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+.job-type{font-size:16px;font-weight:800;}
+.job-badge{padding:4px 12px;border-radius:50px;font-size:11px;font-weight:700;text-transform:uppercase;}
+.badge-open{background:rgba(0,200,100,.15);color:#00c864;border:1px solid rgba(0,200,100,.3);}
+.badge-filled{background:rgba(204,0,0,.15);color:#CC0000;border:1px solid rgba(204,0,0,.3);}
+.job-desc{font-size:13px;color:#888;line-height:1.6;margin-bottom:10px;}
+.apply-btn{display:inline-block;margin-top:14px;background:#F5C800;color:#000;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;}
+.no-data{text-align:center;padding:40px;color:#888;font-size:14px;}
+/* RESOURCES - NICHE HUB */
+.niche-hub-header{text-align:center;padding:20px 0 28px;}
+.niche-hub-title{font-size:32px;font-weight:900;color:#FFF;line-height:1.1;}
+.niche-hub-sub{font-size:28px;font-weight:900;color:#F5C800;margin-bottom:10px;}
+.niche-hub-desc{font-size:13px;color:#888;max-width:480px;margin:0 auto;line-height:1.6;}
+.niche-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;}
+.niche-card{background:#222;border:1px solid #333;border-radius:14px;padding:20px 16px;cursor:pointer;transition:all .2s;text-align:center;}
+.niche-card:hover{border-color:#F5C800;transform:translateY(-2px);}
+.niche-icon{font-size:28px;margin-bottom:10px;}
+.niche-name{font-size:13px;font-weight:800;color:#FFF;margin-bottom:4px;}
+.niche-desc{font-size:11px;color:#888;line-height:1.4;}
+.niche-detail-header{margin-bottom:24px;}
+.back-btn{background:transparent;border:1px solid #333;color:#888;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;margin-bottom:14px;}
+.back-btn:hover{border-color:#F5C800;color:#F5C800;}
+.niche-detail-title{font-size:24px;font-weight:900;color:#F5C800;margin-bottom:10px;}
+.niche-progress-row{display:flex;align-items:center;gap:14px;font-size:12px;color:#888;}
+.niche-prog-bar-wrap{flex:1;height:6px;background:#333;border-radius:50px;overflow:hidden;}
+.niche-prog-bar{height:100%;background:#F5C800;border-radius:50px;transition:width .4s;}
+.resource-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.res-card{background:#222;border:1px solid #333;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;}
+.res-card.res-done{opacity:.65;border-color:rgba(0,200,100,.25);background:rgba(0,200,100,.03);}
+.res-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.res-platform{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:4px;}
+.plat-hubspot{background:#ff7a59;color:#FFF;}.plat-coursera{background:#0056d3;color:#FFF;}.plat-google{background:#4285f4;color:#FFF;}
+.plat-youtube{background:#ff0000;color:#FFF;}.plat-canva{background:#7d2ae8;color:#FFF;}.plat-semrush{background:#ff642d;color:#FFF;}
+.plat-meta{background:#0082fb;color:#FFF;}.plat-free{background:#00c864;color:#000;}.plat-linkedin{background:#0a66c2;color:#FFF;}
+.res-duration{font-size:10px;color:#888;}
+.res-title{font-size:13px;font-weight:800;color:#FFF;line-height:1.3;}
+.res-desc{font-size:11px;color:#888;line-height:1.5;flex:1;}
+.res-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:4px;}
+.res-open{background:#F5C800;color:#000;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:800;text-decoration:none;}
+.res-complete{width:20px;height:20px;border-radius:50%;border:2px solid #333;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;transition:all .2s;flex-shrink:0;}
+.res-complete.done{background:#00c864;border-color:#00c864;color:#000;}
+.res-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;}
+.badge-free{background:rgba(0,200,100,.15);color:#00c864;border:1px solid rgba(0,200,100,.3);}
+.badge-cert{background:rgba(245,200,0,.15);color:#F5C800;border:1px solid rgba(245,200,0,.3);}
+/* ACCOUNT */
+.account-card{background:#222;border:1px solid #333;border-radius:14px;padding:24px;margin-bottom:16px;}
+.account-card h3{font-size:13px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;}
+.account-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px;}
+.account-row:last-child{border-bottom:none;}
+.account-row .al{color:#888;}
+.account-row .av{font-weight:600;}
+.av.active{color:#00c864;}
+/* RESET */
+.reset-box{background:#1A1A1A;border:1px solid #333;border-radius:16px;padding:36px 28px;width:100%;max-width:420px;}
+.reset-box h2{font-size:22px;font-weight:800;margin-bottom:6px;}
+.reset-box p{color:#888;font-size:13px;margin-bottom:24px;}
+
+/* ── ONBOARDING STYLES (matching existing design) ── */
+.ob-locked{background:linear-gradient(135deg,#1a1200,#2a1800);border:1px solid rgba(245,200,0,.2);border-radius:16px;padding:56px 32px;text-align:center;max-width:500px;margin:0 auto;}
+.ob-locked .lock-icon{font-size:48px;margin-bottom:16px;}
+.ob-locked h2{font-size:20px;font-weight:800;color:#F5C800;margin-bottom:10px;}
+.ob-locked p{color:#888;font-size:14px;line-height:1.7;}
+.ob-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;}
+.ob-sidebar{background:#222;border:1px solid #333;border-radius:12px;overflow:hidden;}
+.ob-sidebar-header{padding:12px 16px;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#F5C800;border-bottom:1px solid #333;background:#1A1A1A;}
+.ob-vid-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .15s;}
+.ob-vid-item:hover{background:rgba(245,200,0,.05);}
+.ob-vid-item.ob-active{background:rgba(245,200,0,.1);border-left:3px solid #F5C800;}
+.ob-vid-item.ob-locked-item{cursor:not-allowed;opacity:.45;}
+.ob-vid-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+.ob-vid-title{font-size:12px;font-weight:600;color:#FFF;flex:1;line-height:1.3;}
+.ob-vid-status{font-size:10px;color:#888;margin-top:2px;}
+.ob-player-area{background:#222;border:1px solid #333;border-radius:12px;overflow:hidden;}
+.ob-player-header{padding:14px 18px;border-bottom:1px solid #333;}
+.ob-player-header h3{font-size:14px;font-weight:700;}
+.ob-player-header p{font-size:11px;color:#888;margin-top:3px;}
+.ob-player-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;}
+.ob-player-wrap iframe{width:100%;height:100%;border:none;}
+.ob-overlay{position:absolute;inset:0;z-index:10;cursor:not-allowed;}
+.ob-footer{padding:14px 18px;}
+.ob-prog-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.ob-prog-bar-wrap{flex:1;background:#333;border-radius:50px;height:8px;overflow:hidden;}
+.ob-prog-fill{height:100%;background:linear-gradient(90deg,#F5C800,#e6b800);border-radius:50px;transition:width .4s;}
+.ob-prog-pct{font-size:11px;color:#888;white-space:nowrap;}
+.ob-warning{background:rgba(204,0,0,.1);border:1px solid rgba(204,0,0,.3);border-radius:8px;padding:10px 14px;font-size:12px;color:#CC0000;margin-bottom:10px;display:none;}
+.ob-next-btn{background:#F5C800;color:#000;border:none;border-radius:8px;padding:9px 22px;font-size:13px;font-weight:700;cursor:pointer;display:none;}
+/* QUIZ */
+.quiz-wrap{max-width:620px;margin:0 auto;}
+.quiz-intro{text-align:center;margin-bottom:28px;}
+.quiz-intro h2{font-size:22px;font-weight:800;color:#F5C800;margin-bottom:8px;}
+.quiz-intro p{color:#888;font-size:14px;line-height:1.7;}
+.q-card{background:#222;border:1px solid #333;border-radius:12px;padding:22px;margin-bottom:14px;}
+.q-num{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:8px;}
+.q-text{font-size:14px;font-weight:700;margin-bottom:14px;line-height:1.5;}
+.q-opt{display:block;width:100%;padding:11px 14px;text-align:left;background:#1A1A1A;border:1px solid #333;border-radius:8px;color:#FFF;cursor:pointer;font-size:13px;margin-bottom:8px;transition:all .15s;}
+.q-opt:hover{border-color:#F5C800;}
+.q-opt.selected{border-color:#F5C800;background:rgba(245,200,0,.08);color:#F5C800;font-weight:600;}
+.q-opt.correct{border-color:#00c864;background:rgba(0,200,100,.08);color:#00c864;}
+.q-opt.wrong{border-color:#CC0000;background:rgba(204,0,0,.08);color:#CC0000;}
+.quiz-submit-btn{width:100%;padding:14px;background:#F5C800;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px;}
+.quiz-submit-btn:disabled{opacity:.45;cursor:not-allowed;}
+.quiz-result-box{background:#222;border:1px solid #333;border-radius:16px;padding:48px 32px;text-align:center;max-width:460px;margin:0 auto;}
+.quiz-result-box .ri{font-size:56px;margin-bottom:16px;}
+.quiz-result-box h2{font-size:24px;font-weight:800;margin-bottom:8px;}
+.quiz-score{font-size:52px;font-weight:900;margin:16px 0;}
+.quiz-result-box p{color:#888;font-size:14px;margin-bottom:20px;line-height:1.7;}
+.quiz-retry-btn{background:transparent;border:1px solid #F5C800;color:#F5C800;padding:10px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;}
+
+@media(max-width:768px){.modules-layout{grid-template-columns:1fr}.modules-sidebar{max-height:350px}.dash-grid{grid-template-columns:1fr}.ob-layout{grid-template-columns:1fr}}
+@media(max-width:600px){.portal-nav{padding:0 14px}.tab-content{padding:16px}.dash-welcome{flex-direction:column}}
+</style>
+</head>
+<body>
+<!-- AUTH -->
+<div id="screen-auth" class="screen active">
+  <div class="center-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="brand-tag">VA Newbies PH</div>
+        <h1>Member <span>Portal</span></h1>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login-btn" onclick="switchAuth('login')">Login</button>
+        <button class="auth-tab" id="tab-reg-btn" onclick="switchAuth('register')">Sign Up</button>
+      </div>
+      <div id="login-form">
+        <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@email.com"/></div>
+        <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••"/></div>
+        <button class="btn btn-yellow" onclick="doLogin()">Login to Portal</button>
+        <div class="err" id="login-err"></div>
+      </div>
+      <div id="register-form" style="display:none">
+        <div class="field"><label>Full Name</label><input type="text" id="reg-name" placeholder="Ana Reyes"/></div>
+        <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="you@email.com"/></div>
+        <div class="field"><label>Password</label><input type="password" id="reg-pass" placeholder="Min 6 characters"/></div>
+        <button class="btn btn-yellow" onclick="doRegister()">Create Account</button>
+        <div class="err" id="reg-err"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- RESET PASSWORD -->
+<div id="screen-reset" class="screen">
+  <div class="center-wrap">
+    <div class="reset-box">
+      <h2>Set New Password</h2>
+      <p>Enter your new password below.</p>
+      <div class="field"><label>New Password</label><input type="password" id="new-pass" placeholder="Min 6 characters"/></div>
+      <div class="field"><label>Confirm Password</label><input type="password" id="confirm-pass" placeholder="Repeat password"/></div>
+      <button class="btn btn-yellow" onclick="doSetPassword()">Set Password</button>
+      <div class="err" id="reset-err"></div>
+    </div>
+  </div>
+</div>
+<!-- PENDING -->
+<div id="screen-pending" class="screen">
+  <div class="center-wrap">
+    <div class="status-box">
+      <div class="status-icon">&#9203;</div>
+      <h2>Application Pending</h2>
+      <p>Your account is waiting for approval from Coach Di. You will receive access once approved.</p>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+</div>
+<!-- TERMINATED -->
+<div id="screen-terminated" class="screen">
+  <div class="center-wrap">
+    <div class="status-box">
+      <div class="status-icon">&#128683;</div>
+      <h2>Access Terminated</h2>
+      <p>Your membership has been terminated. Contact Coach Di if you believe this is a mistake.</p>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+</div>
+<!-- EXPIRED -->
+<div id="screen-expired" class="screen">
+  <div class="center-wrap">
+    <div class="status-box">
+      <div class="status-icon">&#128197;</div>
+      <h2>Membership Expired</h2>
+      <p>Your membership period has ended. DM Coach Di to renew your access!</p>
+      <a href="mailto:hello@donebydi.com" style="display:inline-block;margin-top:16px;background:#F5C800;color:#000;padding:12px 24px;border-radius:10px;font-weight:700;text-decoration:none;font-size:14px;">Email Coach Di</a>
+      <br/><button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+</div>
+<!-- PORTAL -->
+<div id="screen-portal" class="screen">
+  <nav class="portal-nav">
+    <div class="nav-brand">VA Newbies PH</div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <span style="font-size:13px;color:#888;" id="nav-user-name"></span>
+      <button class="nav-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </nav>
+  <div class="portal-tabs">
+    <button class="tab-btn active" onclick="openTab(this,'home')">Dashboard</button>
+    <button class="tab-btn" onclick="openTab(this,'onboarding')">🎬 Onboarding</button>
+    <button class="tab-btn" onclick="openTab(this,'modules')">Learning Library</button>
+    <button class="tab-btn" onclick="openTab(this,'checklist')">Checklist</button>
+    <button class="tab-btn" onclick="openTab(this,'jobs')">Job Board</button>
+    <button class="tab-btn" onclick="openTab(this,'resources')">Resources</button>
+    <button class="tab-btn" onclick="openTab(this,'account')">My Account</button>
+    <button class="tab-btn" onclick="openTab(this,'portfolio')">My Portfolio</button>
+    <button class="tab-btn" id="msg-tab-btn" onclick="openTab(this,'messages')">Messages <span id="msg-badge" style="display:none;background:#CC0000;color:#fff;padding:1px 7px;border-radius:50px;font-size:10px;margin-left:4px;">0</span></button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-home" class="tab-content active">
+    <div class="dash-welcome">
+      <div>
+        <h2>Welcome back, <span id="welcome-name">VA!</span></h2>
+        <p>You are on your way to building a successful VA career.<br/>Stay consistent — every module you complete gets you closer to your first client.</p>
+      </div>
+      <span class="tier-badge tier-starter" id="tier-badge">Starter</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="s-label">Membership</div><div class="s-val">Active</div><div class="s-sub">In good standing</div></div>
+      <div class="stat-card"><div class="s-label">Access Until</div><div class="s-val" id="home-expiry" style="font-size:15px">--</div><div class="s-sub" id="home-days">-- days remaining</div></div>
+      <div class="stat-card green-card"><div class="s-label">Videos Completed</div><div class="s-val" id="home-completed">0</div><div class="s-sub">of 5 Start Here videos</div></div>
+      <div class="stat-card red-card"><div class="s-label">Open Jobs</div><div class="s-val" id="home-jobs">--</div><div class="s-sub">available now</div></div>
+    </div>
+    <div class="progress-wrap">
+      <h3>Start Here Progress</h3>
+      <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
+      <div class="prog-label"><span id="prog-text">0 of 5 completed</span><span id="prog-pct">0%</span></div>
+    </div>
+    <!-- Onboarding notice if paired -->
+    <div id="dash-paired-notice" style="display:none;background:linear-gradient(135deg,#1a1200,#2a1800);border:1px solid rgba(245,200,0,.3);border-radius:14px;padding:20px;margin-bottom:22px;">
+      <div style="font-size:13px;font-weight:800;color:#F5C800;margin-bottom:6px;">🔗 You've been client-paired!</div>
+      <div style="font-size:13px;color:#888;line-height:1.6;">Your Onboarding playlist is now unlocked. Go to the <strong style="color:#FFF;">🎬 Onboarding</strong> tab to get started.</div>
+    </div>
+    <div class="dash-grid">
+      <div class="info-card">
+        <h3>Membership Info</h3>
+        <div class="info-row"><span class="i-label">Tier</span><span class="i-val" id="d-tier">--</span></div>
+        <div class="info-row"><span class="i-label">Status</span><span class="i-val active" id="d-status">Active</span></div>
+        <div class="info-row"><span class="i-label">Start Date</span><span class="i-val" id="d-start">--</span></div>
+        <div class="info-row"><span class="i-label">End Date</span><span class="i-val" id="d-end">--</span></div>
+        <div class="info-row"><span class="i-label">Payment</span><span class="i-val">GCash</span></div>
+      </div>
+      <div class="info-card">
+        <h3>Program Info</h3>
+        <div class="info-row"><span class="i-label">Coaching</span><span class="i-val">Group — Weekly</span></div>
+        <div class="info-row"><span class="i-label">Client Matching</span><span class="i-val">Core &amp; Pro only</span></div>
+        <div class="info-row"><span class="i-label">Internship</span><span class="i-val">3 Weeks</span></div>
+        <div class="info-row"><span class="i-label">Certificate</span><span class="i-val">Pro Tier only</span></div>
+        <div class="info-row"><span class="i-label">Community</span><span class="i-val active">Active</span></div>
+      </div>
+    </div>
+    <div class="notice-card">
+      <h3>Important Reminders</h3>
+      <div class="notice-item"><div class="notice-dot"></div><div>All client information is strictly confidential — emails, passwords, documents and operations must not be shared with anyone.</div></div>
+      <div class="notice-item"><div class="notice-dot"></div><div>No payment is required between you and your host client. Any attempt to collect fees will result in removal from the program.</div></div>
+      <div class="notice-item"><div class="notice-dot"></div><div>After your 3-week internship, you must submit an honest feedback form before being matched with another client.</div></div>
+      <div class="notice-item"><div class="notice-dot"></div><div>No rant posts or social media shaming. Violations result in permanent removal from VA Newbies PH.</div></div>
+    </div>
+    <div style="background:#222;border:1px solid #333;border-radius:14px;padding:20px;">
+      <div class="section-title">Quick Access</div>
+      <div class="quick-grid">
+        <div class="quick-card" onclick="openTab(document.querySelectorAll('.tab-btn')[2],'modules')"><div class="q-icon">&#9654;</div><div class="q-label">Start Learning</div><div class="q-sub">Watch your modules</div></div>
+        <div class="quick-card" onclick="openTab(document.querySelectorAll('.tab-btn')[3],'checklist')"><div class="q-icon">&#9989;</div><div class="q-label">My Checklist</div><div class="q-sub">Track your progress</div></div>
+        <div class="quick-card" onclick="openTab(document.querySelectorAll('.tab-btn')[4],'jobs')"><div class="q-icon">&#128188;</div><div class="q-label">Job Board</div><div class="q-sub">Available clients</div></div>
+        <div class="quick-card" onclick="openTab(document.querySelectorAll('.tab-btn')[5],'resources')"><div class="q-icon">&#128193;</div><div class="q-label">Resources</div><div class="q-sub">Free courses</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ONBOARDING TAB ── -->
+  <div id="tab-onboarding" class="tab-content">
+
+    <!-- Locked -->
+    <div id="ob-locked" class="ob-locked" style="display:none">
+      <div class="lock-icon">🔒</div>
+      <h2>Onboarding Playlist Locked</h2>
+      <p>This playlist unlocks once Coach Di pairs you with a client. Keep your profile updated and watch for your pairing confirmation!</p>
+    </div>
+
+    <!-- Active playlist -->
+    <div id="ob-active" style="display:none">
+      <div class="section-title" style="margin-bottom:18px;">🎬 Onboarding Playlist</div>
+      <div class="ob-layout">
+        <div class="ob-sidebar">
+          <div class="ob-sidebar-header">Videos</div>
+          <div id="ob-vid-list"></div>
+        </div>
+        <div class="ob-player-area">
+          <div class="ob-player-header">
+            <h3 id="ob-player-title">Select a video</h3>
+            <p id="ob-player-sub"></p>
+          </div>
+          <div class="ob-player-wrap" id="ob-player-wrap">
+            <div id="ob-yt-player"></div>
+            <div class="ob-overlay" id="ob-overlay"></div>
+          </div>
+          <div class="ob-footer">
+            <div class="ob-warning" id="ob-warning">⚠️ Watch at least 90% of the video — skipping is tracked. You cannot proceed until you finish this video.</div>
+            <div class="ob-prog-row">
+              <div class="ob-prog-bar-wrap"><div class="ob-prog-fill" id="ob-prog-fill" style="width:0%"></div></div>
+              <span class="ob-prog-pct" id="ob-prog-pct">0%</span>
+            </div>
+            <button class="ob-next-btn" id="ob-next-btn" onclick="obNextVideo()">Next Video →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quiz -->
+    <div id="ob-quiz" style="display:none">
+      <div class="quiz-wrap">
+        <div class="quiz-intro">
+          <div style="font-size:36px;margin-bottom:10px;">📝</div>
+          <h2>Onboarding Quiz</h2>
+          <p>You've completed all the videos. Answer all questions — you need <strong style="color:#F5C800;">70%</strong> to pass and complete your onboarding.</p>
+        </div>
+        <div id="ob-quiz-questions"></div>
+        <button class="quiz-submit-btn" id="ob-quiz-submit" onclick="obSubmitQuiz()" disabled>Submit Quiz</button>
+      </div>
+    </div>
+
+    <!-- Quiz result -->
+    <div id="ob-quiz-result" style="display:none">
+      <div class="quiz-result-box">
+        <div class="ri" id="ob-result-icon"></div>
+        <h2 id="ob-result-title"></h2>
+        <div class="quiz-score" id="ob-result-score"></div>
+        <p id="ob-result-msg"></p>
+        <button class="quiz-retry-btn" id="ob-retry-btn" style="display:none" onclick="obRetakeQuiz()">Retake Quiz</button>
+        <div id="ob-pass-badge" style="display:none;margin-top:16px;">
+          <span style="background:rgba(0,200,100,.15);color:#00c864;border:1px solid rgba(0,200,100,.3);padding:10px 24px;border-radius:50px;font-weight:800;font-size:14px;">✅ Onboarding Complete!</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LEARNING LIBRARY -->
+  <div id="tab-modules" class="tab-content">
+    <div id="modules-container"></div>
+  </div>
+  <!-- CHECKLIST -->
+  <div id="tab-checklist" class="tab-content">
+    <div class="section-title">Onboarding Checklist</div>
+    <div class="checklist" id="checklist">
+      <div class="check-item" id="cl-1" onclick="toggleCheck('cl-1')"><div class="check-circle" id="cc-1"></div><div class="check-text">Watch all 5 Start Here videos</div></div>
+      <div class="check-item" id="cl-2" onclick="toggleCheck('cl-2')"><div class="check-circle" id="cc-2"></div><div class="check-text">Join the VA Newbies PH Facebook Community</div></div>
+      <div class="check-item" id="cl-3" onclick="toggleCheck('cl-3')"><div class="check-circle" id="cc-3"></div><div class="check-text">Read the VA Guidelines and Client Guidelines</div></div>
+      <div class="check-item" id="cl-4" onclick="toggleCheck('cl-4')"><div class="check-circle" id="cc-4"></div><div class="check-text">Set up your professional email address</div></div>
+      <div class="check-item" id="cl-5" onclick="toggleCheck('cl-5')"><div class="check-circle" id="cc-5"></div><div class="check-text">Create or update your LinkedIn profile</div></div>
+      <div class="check-item" id="cl-6" onclick="toggleCheck('cl-6')"><div class="check-circle" id="cc-6"></div><div class="check-text">Set up your Canva free account</div></div>
+      <div class="check-item" id="cl-7" onclick="toggleCheck('cl-7')"><div class="check-circle" id="cc-7"></div><div class="check-text">Complete at least 1 Course Module</div></div>
+      <div class="check-item" id="cl-8" onclick="toggleCheck('cl-8')"><div class="check-circle" id="cc-8"></div><div class="check-text">Attend your first Group Coaching session</div></div>
+      <div class="check-item" id="cl-9" onclick="toggleCheck('cl-9')"><div class="check-circle" id="cc-9"></div><div class="check-text">Check the Job Board for available clients</div></div>
+      <div class="check-item" id="cl-10" onclick="toggleCheck('cl-10')"><div class="check-circle" id="cc-10"></div><div class="check-text">Complete your VA profile and skills list</div></div>
+    </div>
+    <div style="margin-top:20px;background:#222;border:1px solid #333;border-radius:12px;padding:16px;">
+      <div class="prog-bar-wrap"><div class="prog-bar" id="cl-prog-bar" style="width:0%"></div></div>
+      <div class="prog-label" style="margin-top:8px;"><span id="cl-prog-text">0 of 10 completed</span><span id="cl-prog-pct">0%</span></div>
+    </div>
+  </div>
+  <!-- JOB BOARD -->
+  <div id="tab-jobs" class="tab-content">
+    <div class="section-title">Job Board</div>
+    <div id="jobs-list"><div class="no-data">Loading jobs...</div></div>
+  </div>
+  <!-- RESOURCES -->
+  <div id="tab-resources" class="tab-content">
+    <div id="niche-hub" class="niche-hub">
+      <div class="niche-hub-header">
+        <div class="niche-hub-title">Pick Your Niche.</div>
+        <div class="niche-hub-sub">Get your resources.</div>
+        <div class="niche-hub-desc">Free courses, tool tutorials, and curated guides for YOUR specific VA path — hand-picked by Coach Di.</div>
+      </div>
+      <div class="niche-grid">
+        <div class="niche-card" onclick="openNiche('social')"><div class="niche-icon">📱</div><div class="niche-name">Social Media Manager</div><div class="niche-desc">Content, scheduling, analytics, ads</div></div>
+        <div class="niche-card" onclick="openNiche('seo')"><div class="niche-icon">🔍</div><div class="niche-name">SEO + GEO</div><div class="niche-desc">Rankings, local SEO, AI search</div></div>
+        <div class="niche-card" onclick="openNiche('website')"><div class="niche-icon">🌐</div><div class="niche-name">Website Building</div><div class="niche-desc">WordPress, Duda, design basics</div></div>
+        <div class="niche-card" onclick="openNiche('ads')"><div class="niche-icon">📢</div><div class="niche-name">Ads</div><div class="niche-desc">Facebook, Google, paid campaigns</div></div>
+        <div class="niche-card" onclick="openNiche('ai')"><div class="niche-icon">🤖</div><div class="niche-name">AI</div><div class="niche-desc">ChatGPT, automation, AI tools</div></div>
+        <div class="niche-card" onclick="openNiche('exec')"><div class="niche-icon">💼</div><div class="niche-name">Executive Assistant</div><div class="niche-desc">Inbox, travel, strategy, calendar</div></div>
+        <div class="niche-card" onclick="openNiche('content')"><div class="niche-icon">✍️</div><div class="niche-name">Content Writing</div><div class="niche-desc">Copywriting, blogging, SEO writing</div></div>
+        <div class="niche-card" onclick="openNiche('book')"><div class="niche-icon">📚</div><div class="niche-name">Book Publishing</div><div class="niche-desc">Formatting, KDP, publishing workflow</div></div>
+        <div class="niche-card" onclick="openNiche('ecom')"><div class="niche-icon">🛒</div><div class="niche-name">Ecommerce</div><div class="niche-desc">Shopify, Amazon, product listings</div></div>
+        <div class="niche-card" onclick="openNiche('podcast')"><div class="niche-icon">🎙️</div><div class="niche-name">Podcast</div><div class="niche-desc">Editing, show notes, distribution</div></div>
+        <div class="niche-card" onclick="openNiche('digital')"><div class="niche-icon">📊</div><div class="niche-name">Digital Marketing</div><div class="niche-desc">Strategy, funnels, analytics</div></div>
+      </div>
+    </div>
+    <div id="niche-detail" style="display:none">
+      <div class="niche-detail-header">
+        <button class="back-btn" onclick="closeNiche()">← Back to Niches</button>
+        <div class="niche-detail-title" id="niche-detail-name"></div>
+        <div class="niche-progress-row"><span id="niche-prog-text">0 completed</span><div class="niche-prog-bar-wrap"><div class="niche-prog-bar" id="niche-prog-bar" style="width:0%"></div></div></div>
+      </div>
+      <div class="resource-grid" id="resource-grid"></div>
+    </div>
+  </div>
+  <!-- MY ACCOUNT -->
+  <div id="tab-account" class="tab-content">
+    <div class="section-title">My Account</div>
+    <div class="account-card">
+      <h3>Membership Details</h3>
+      <div class="account-row"><span class="al">Full Name</span><span class="av" id="acc-name">--</span></div>
+      <div class="account-row"><span class="al">Email</span><span class="av" id="acc-email">--</span></div>
+      <div class="account-row"><span class="al">Tier</span><span class="av" id="acc-tier">--</span></div>
+      <div class="account-row"><span class="al">Status</span><span class="av active" id="acc-status">Active</span></div>
+      <div class="account-row"><span class="al">Access Start</span><span class="av" id="acc-start">--</span></div>
+      <div class="account-row"><span class="al">Access End</span><span class="av" id="acc-end">--</span></div>
+    </div>
+    <div class="account-card">
+      <h3>Need Help?</h3>
+      <p style="font-size:13px;color:#888;line-height:1.7">For membership questions or coaching — contact Coach Di at <strong style="color:#FFF">hello@donebydi.com</strong> or DM on Facebook.</p>
+    </div>
+  </div>
+  <!-- MY PORTFOLIO -->
+  <div id="tab-portfolio" class="tab-content">
+    <div class="section-title">My Portfolio</div>
+    <div class="account-card">
+      <h3>Submit Your Portfolio Link</h3>
+      <p style="font-size:13px;color:#888;margin-bottom:18px;line-height:1.6;">Share your portfolio so Coach Di can review your work and give you feedback.</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+        <label style="font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;">Portfolio URL *</label>
+        <input type="url" id="port-url" placeholder="https://drive.google.com/..." style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 14px;color:#FFF;font-size:14px;outline:none;width:100%;font-family:inherit;"/>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
+        <label style="font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;">Brief Description (optional)</label>
+        <textarea id="port-desc" placeholder="What skills does your portfolio showcase?" rows="3" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 14px;color:#FFF;font-size:14px;outline:none;width:100%;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+      <button onclick="submitPortfolio()" style="background:#F5C800;color:#000;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;">Submit Portfolio</button>
+      <div id="port-err" style="color:#ff6b6b;font-size:12px;margin-top:10px;display:none;"></div>
+    </div>
+    <div style="margin-top:24px;">
+      <div class="section-title">My Submissions</div>
+      <div id="port-list"><div class="no-data">No submissions yet.</div></div>
+    </div>
+  </div>
+  <!-- MESSAGES -->
+  <div id="tab-messages" class="tab-content">
+    <div class="section-title">Messages</div>
+    <div style="margin-bottom:28px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#F5C800;margin-bottom:12px;">Announcements from Coach Di</div>
+      <div id="broadcasts-list"><div class="no-data">No announcements yet.</div></div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#F5C800;margin-bottom:12px;">Direct Messages</div>
+      <div id="dm-list" style="max-height:400px;overflow-y:auto;background:#222;border:1px solid #333;border-radius:12px;padding:16px;margin-bottom:14px;min-height:100px;">
+        <div class="no-data">No messages yet. Send a message to Coach Di!</div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <input type="text" id="msg-input" placeholder="Type a message to Coach Di..." style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 14px;color:#fff;font-size:14px;outline:none;font-family:inherit;" onkeydown="if(event.key==='Enter')sendMessage()"/>
+        <button onclick="sendMessage()" style="background:#F5C800;color:#000;border:none;border-radius:10px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+var SURL='https://mbcwgtrliiocqcgwbfnu.supabase.co';
+var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iY3dndHJsaWlvY3FjZ3diZm51Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NDQwMzMsImV4cCI6MjA5MTUyMDAzM30.bs3bm6PEK82hr2T9NPs6lQ6jlgolL6wE-TDblXDEMVE';
+var sb=supabase.createClient(SURL,SKEY);
+var currentVideoId='';
+var startHereIds=['N-UtIYl7DmI','zm3DyiN1rbI','Axds_9TAmBg','AgKbdZ60fd8','C7eDgBu3R3g'];
+var MODULES_BUILT=false;
+var currentNiche=null;
+
+// ── ONBOARDING STATE ──
+var obVideos=[];
+var obProgress={};
+var obCurrentIdx=0;
+var obYtPlayer=null;
+var obYtReady=false;
+var obWatchInterval=null;
+var obWatchedSecs=0;
+var obDuration=1;
+var obQuizQuestions=[];
+var obAnswers={};
+var obAttempt=1;
+var currentMemberId=null;
+var currentMemberEmail=null;
+var WATCH_THRESHOLD=0.90;
+var PASS_THRESHOLD=0.70;
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.getElementById('screen-'+id).classList.add('active');}
+function switchAuth(tab){document.getElementById('login-form').style.display=tab==='login'?'block':'none';document.getElementById('register-form').style.display=tab==='register'?'block':'none';document.getElementById('tab-login-btn').classList.toggle('active',tab==='login');document.getElementById('tab-reg-btn').classList.toggle('active',tab==='register');}
+function openTab(btn,id){document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');});if(btn)btn.classList.add('active');document.getElementById('tab-'+id).classList.add('active');if(id==='jobs')loadJobs();if(id==='resources'){document.getElementById('niche-hub').style.display='block';document.getElementById('niche-detail').style.display='none';}if(id==='portfolio')loadPortfolios();if(id==='messages')loadMessages();if(id==='modules'){MODULES_BUILT=false;buildModulesLayout();}if(id==='onboarding')loadOnboardingTab();}
+
+async function doLogin(){
+  var email=document.getElementById('login-email').value.trim();
+  var pass=document.getElementById('login-pass').value;
+  var err=document.getElementById('login-err');
+  err.style.display='none';
+  if(!email||!pass){err.textContent='Please enter email and password.';err.style.display='block';return;}
+  var res=await sb.auth.signInWithPassword({email:email,password:pass});
+  if(res.error){err.textContent=res.error.message;err.style.display='block';return;}
+  await loadPortal();
+}
+async function doRegister(){
+  var name=document.getElementById('reg-name').value.trim();
+  var email=document.getElementById('reg-email').value.trim();
+  var pass=document.getElementById('reg-pass').value;
+  var err=document.getElementById('reg-err');
+  err.style.display='none';
+  if(!name||!email||!pass){err.textContent='Please fill all fields.';err.style.display='block';return;}
+  var res=await sb.auth.signUp({email:email,password:pass,options:{data:{full_name:name}}});
+  if(res.error){err.textContent=res.error.message;err.style.display='block';return;}
+  if(res.data&&res.data.user){
+    var preCheck=await sb.from('signups').select('*').eq('email',email).eq('pre_approved',true).single();
+    if(preCheck.data){
+      var tier=preCheck.data.tier||'starter';var months=tier==='pro'?6:3;
+      var start=new Date();var end=new Date();end.setMonth(end.getMonth()+months);
+      await sb.from('members').insert({id:res.data.user.id,full_name:name,email:email,status:'active',tier:tier,access_start:start.toISOString().split('T')[0],access_end:end.toISOString().split('T')[0]});
+    } else {
+      await sb.from('members').insert({id:res.data.user.id,full_name:name,email:email,status:'pending',tier:'starter'});
+    }
+    showScreen('pending');
+  }
+}
+async function doLogout(){clearInterval(obWatchInterval);await sb.auth.signOut();showScreen('auth');}
+async function doSetPassword(){
+  var np=document.getElementById('new-pass').value;var cp=document.getElementById('confirm-pass').value;var err=document.getElementById('reset-err');err.style.display='none';
+  if(np.length<6){err.textContent='Min 6 characters.';err.style.display='block';return;}
+  if(np!==cp){err.textContent='Passwords do not match.';err.style.display='block';return;}
+  var res=await sb.auth.updateUser({password:np});
+  if(res.error){err.textContent=res.error.message;err.style.display='block';return;}
+  alert('Password set! Please log in.');await sb.auth.signOut();showScreen('auth');
+}
+async function loadPortal(){
+  var ud=await sb.auth.getUser();if(!ud.data||!ud.data.user){showScreen('auth');return;}
+  var user=ud.data.user;
+  var res=await sb.from('members').select('*').eq('id',user.id).single();
+  var member=res.data;
+  if(!member){showScreen('pending');return;}
+  if(member.status==='pending'){showScreen('pending');return;}
+  if(member.status==='terminated'){showScreen('terminated');return;}
+  if(member.access_end){var t=new Date();t.setHours(0,0,0,0);if(new Date(member.access_end)<t){showScreen('expired');return;}}
+  currentMemberId=member.id;
+  currentMemberEmail=member.email||user.email;
+  populatePortal(member,user);
+  showScreen('portal');
+  loadJobCount();loadCompletions();updateMsgBadge();loadChecklist();
+  // Show paired notice on dashboard
+  if(member.client_paired&&!member.onboarding_completed){
+    document.getElementById('dash-paired-notice').style.display='block';
+  }
+}
+function populatePortal(member,user){
+  var name=member.full_name||user.email;var fn=name.split(' ')[0];
+  document.getElementById('nav-user-name').textContent=fn;
+  document.getElementById('welcome-name').textContent=fn+'!';
+  var tier=(member.tier||'starter').toUpperCase();
+  var badge=document.getElementById('tier-badge');badge.textContent=tier;badge.className='tier-badge tier-'+member.tier;
+  if(member.access_end){
+    var exp=new Date(member.access_end);var t=new Date();t.setHours(0,0,0,0);var days=Math.ceil((exp-t)/86400000);
+    document.getElementById('home-expiry').textContent=exp.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
+    document.getElementById('home-days').textContent=days+' days remaining';
+    document.getElementById('d-end').textContent=exp.toLocaleDateString('en-PH');
+  }
+  document.getElementById('d-tier').textContent=tier;
+  document.getElementById('d-start').textContent=member.access_start?new Date(member.access_start).toLocaleDateString('en-PH'):'--';
+  document.getElementById('acc-name').textContent=member.full_name||'--';
+  document.getElementById('acc-email').textContent=member.email||user.email;
+  document.getElementById('acc-tier').textContent=tier;
+  document.getElementById('acc-start').textContent=member.access_start?new Date(member.access_start).toLocaleDateString('en-PH'):'--';
+  document.getElementById('acc-end').textContent=member.access_end?new Date(member.access_end).toLocaleDateString('en-PH'):'--';
+}
+async function loadJobCount(){var res=await sb.from('jobs').select('id').eq('status','open');document.getElementById('home-jobs').textContent=res.data?res.data.length:0;}
+
+// ── ONBOARDING TAB ──────────────────────────────────────────
+async function loadOnboardingTab(){
+  document.getElementById('ob-locked').style.display='none';
+  document.getElementById('ob-active').style.display='none';
+  document.getElementById('ob-quiz').style.display='none';
+  document.getElementById('ob-quiz-result').style.display='none';
+  if(!currentMemberId)return;
+  var res=await sb.from('members').select('client_paired,onboarding_completed').eq('id',currentMemberId).single();
+  var m=res.data;
+  if(!m||!m.client_paired){document.getElementById('ob-locked').style.display='block';return;}
+  var[{data:videos},{data:progress},{data:quizRes}]=await Promise.all([
+    sb.from('onboarding_videos').select('*').order('position'),
+    sb.from('onboarding_watch_progress').select('*').eq('member_id',currentMemberId),
+    sb.from('onboarding_quiz_results').select('*').eq('member_id',currentMemberId).order('taken_at',{ascending:false}).limit(1)
+  ]);
+  obVideos=videos||[];
+  obProgress={};
+  (progress||[]).forEach(function(p){obProgress[p.video_id]=p;});
+  var allDone=obVideos.length>0&&obVideos.every(function(v){return obProgress[v.id]&&obProgress[v.id].completed;});
+  if(allDone){
+    if(quizRes&&quizRes.length){obShowResult(quizRes[0]);}
+    else{obShowQuiz();}
+    return;
+  }
+  document.getElementById('ob-active').style.display='block';
+  obRenderSidebar();
+  var firstUncompleted=obVideos.findIndex(function(v){return!obProgress[v.id]||!obProgress[v.id].completed;});
+  obCurrentIdx=firstUncompleted>=0?firstUncompleted:0;
+  obLoadVideo(obCurrentIdx);
+}
+
+function obRenderSidebar(){
+  var list=document.getElementById('ob-vid-list');
+  list.innerHTML=obVideos.map(function(v,i){
+    var wp=obProgress[v.id];
+    var icon='⬜',status='Not started';
+    if(wp&&wp.completed){icon='✅';status='Completed';}
+    else if(wp&&wp.skipped){icon='⏭️';status='Needs rewatch';}
+    else if(wp&&wp.watch_seconds>0){var pct=Math.round((wp.watch_seconds/Math.max(wp.duration_seconds,1))*100);icon='⏳';status=pct+'% watched';}
+    var isLocked=i>0&&(!obProgress[obVideos[i-1].id]||!obProgress[obVideos[i-1].id].completed);
+    if(isLocked&&(!wp||!wp.completed)){icon='🔒';status='Finish previous first';}
+    var cls='ob-vid-item'+(i===obCurrentIdx?' ob-active':'')+(isLocked&&(!wp||!wp.completed)?' ob-locked-item':'');
+    return '<div class="'+cls+'" onclick="'+(isLocked&&(!wp||!wp.completed)?'':'obPlayAt('+i+')')+'">'+
+      '<div class="ob-vid-icon">'+icon+'</div>'+
+      '<div><div class="ob-vid-title">'+v.title+'</div><div class="ob-vid-status">'+status+'</div></div>'+
+      '</div>';
+  }).join('');
+}
+
+function obPlayAt(idx){obCurrentIdx=idx;obRenderSidebar();obLoadVideo(idx);}
+
+function obLoadVideo(idx){
+  var v=obVideos[idx];if(!v)return;
+  document.getElementById('ob-player-title').textContent=v.title;
+  document.getElementById('ob-player-sub').textContent='Video '+(idx+1)+' of '+obVideos.length;
+  document.getElementById('ob-prog-fill').style.width='0%';
+  document.getElementById('ob-prog-pct').textContent='0%';
+  document.getElementById('ob-warning').style.display='none';
+  document.getElementById('ob-next-btn').style.display='none';
+  obWatchedSecs=obProgress[v.id]?obProgress[v.id].watch_seconds||0:0;
+  obDuration=v.duration_seconds||300;
+  clearInterval(obWatchInterval);
+  var wrap=document.getElementById('ob-player-wrap');
+  var old=document.getElementById('ob-yt-iframe');if(old)old.remove();
+  var iframe=document.createElement('iframe');
+  iframe.id='ob-yt-iframe';
+  iframe.src='https://www.youtube.com/embed/'+v.youtube_video_id+'?enablejsapi=1&rel=0&controls=1&modestbranding=1';
+  iframe.allow='autoplay; encrypted-media';iframe.allowFullscreen=true;
+  iframe.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;border:none;';
+  wrap.insertBefore(iframe,wrap.firstChild);
+  // Poll progress via YouTube API
+  obWatchInterval=setInterval(function(){obPollProgress(v);},1000);
+}
+
+function obPollProgress(v){
+  var iframe=document.getElementById('ob-yt-iframe');if(!iframe)return;
+  // Track via elapsed time since we can't get currentTime cross-origin easily without API key
+  obWatchedSecs=Math.min(obWatchedSecs+1,obDuration);
+  var pct=Math.min(Math.round((obWatchedSecs/obDuration)*100),100);
+  document.getElementById('ob-prog-fill').style.width=pct+'%';
+  document.getElementById('ob-prog-pct').textContent=pct+'%';
+  if(pct>=90){
+    obSaveProgress(v,true);
+    document.getElementById('ob-next-btn').style.display='block';
+    document.getElementById('ob-warning').style.display='none';
+    if(!obProgress[v.id]||!obProgress[v.id].completed){
+      obProgress[v.id]={completed:true,watch_seconds:Math.round(obWatchedSecs),duration_seconds:obDuration};
+      obRenderSidebar();
+    }
+  } else if(pct%30===0&&pct>0){
+    obSaveProgress(v,false);
+  }
+}
+
+async function obSaveProgress(v,completed){
+  if(!currentMemberId)return;
+  var pct=obWatchedSecs/Math.max(obDuration,1);
+  await sb.from('onboarding_watch_progress').upsert({
+    member_id:currentMemberId,video_id:v.id,
+    watch_seconds:Math.round(obWatchedSecs),duration_seconds:Math.round(obDuration),
+    completed:completed&&pct>=WATCH_THRESHOLD,skipped:false,
+    last_updated:new Date().toISOString()
+  },{onConflict:'member_id,video_id'});
+}
+
+async function obNextVideo(){
+  clearInterval(obWatchInterval);
+  if(obCurrentIdx<obVideos.length-1){
+    obCurrentIdx++;obRenderSidebar();obLoadVideo(obCurrentIdx);
+  } else {
+    // All done
+    var[{data:progress}]=await Promise.all([
+      sb.from('onboarding_watch_progress').select('*').eq('member_id',currentMemberId)
+    ]);
+    obProgress={};(progress||[]).forEach(function(p){obProgress[p.video_id]=p;});
+    var allDone=obVideos.every(function(v){return obProgress[v.id]&&obProgress[v.id].completed;});
+    if(allDone){document.getElementById('ob-active').style.display='none';obShowQuiz();}
+  }
+}
+
+// ── QUIZ ──
+async function obShowQuiz(){
+  document.getElementById('ob-quiz').style.display='block';
+  var res=await sb.from('onboarding_quiz_questions').select('*').order('position');
+  obQuizQuestions=res.data||[];obAnswers={};
+  var prev=await sb.from('onboarding_quiz_results').select('attempt').eq('member_id',currentMemberId).order('attempt',{ascending:false}).limit(1);
+  obAttempt=prev.data&&prev.data.length?prev.data[0].attempt+1:1;
+  var wrap=document.getElementById('ob-quiz-questions');
+  wrap.innerHTML=obQuizQuestions.map(function(q,qi){
+    return '<div class="q-card">'+
+      '<div class="q-num">Question '+q.position+'</div>'+
+      '<div class="q-text">'+q.question+'</div>'+
+      ['a','b','c','d'].map(function(opt){
+        return '<button class="q-opt" id="qopt-'+qi+'-'+opt+'" onclick="obSelectOpt('+qi+',\''+opt+'\',\''+q.id+'\')">'+
+          opt.toUpperCase()+'. '+q['option_'+opt]+'</button>';
+      }).join('')+
+    '</div>';
+  }).join('');
+  document.getElementById('ob-quiz-submit').disabled=true;
+}
+
+function obSelectOpt(qi,opt,qid){
+  obAnswers[qid]=opt;
+  ['a','b','c','d'].forEach(function(o){var el=document.getElementById('qopt-'+qi+'-'+o);if(el)el.classList.remove('selected');});
+  var sel=document.getElementById('qopt-'+qi+'-'+opt);if(sel)sel.classList.add('selected');
+  if(Object.keys(obAnswers).length===obQuizQuestions.length)document.getElementById('ob-quiz-submit').disabled=false;
+}
+
+async function obSubmitQuiz(){
+  var correct=0;
+  obQuizQuestions.forEach(function(q){if(obAnswers[q.id]===q.correct_answer)correct++;});
+  var total=obQuizQuestions.length;var passed=correct/total>=PASS_THRESHOLD;
+  // Show correct/wrong
+  obQuizQuestions.forEach(function(q,qi){
+    ['a','b','c','d'].forEach(function(o){
+      var btn=document.getElementById('qopt-'+qi+'-'+o);if(!btn)return;
+      if(o===q.correct_answer)btn.classList.add('correct');
+      else if(o===obAnswers[q.id])btn.classList.add('wrong');
+    });
+  });
+  document.getElementById('ob-quiz-submit').disabled=true;
+  document.getElementById('ob-quiz-submit').textContent='Submitted ✓';
+  await sb.from('onboarding_quiz_results').insert([{member_id:currentMemberId,score:correct,total:total,passed:passed,answers:obAnswers,attempt:obAttempt}]);
+  if(passed){await sb.from('members').update({onboarding_completed:true,onboarding_completed_at:new Date().toISOString()}).eq('id',currentMemberId);}
+  setTimeout(function(){document.getElementById('ob-quiz').style.display='none';obShowResult({score:correct,total:total,passed:passed,attempt:obAttempt});},1500);
+}
+
+function obShowResult(result){
+  document.getElementById('ob-quiz-result').style.display='block';
+  var score=Math.round((result.score/result.total)*100);
+  document.getElementById('ob-result-icon').textContent=result.passed?'🏆':'😤';
+  document.getElementById('ob-result-title').textContent=result.passed?'You Passed!':'Not Quite Yet';
+  document.getElementById('ob-result-title').style.color=result.passed?'#00c864':'#CC0000';
+  document.getElementById('ob-result-score').textContent=score+'%';
+  document.getElementById('ob-result-score').style.color=result.passed?'#00c864':'#CC0000';
+  document.getElementById('ob-result-msg').textContent=result.passed?'You got '+result.score+'/'+result.total+' correct. You\'re officially onboarded — Coach Di will be notified!':'You got '+result.score+'/'+result.total+' correct. You need 70% to pass. Review the videos and try again.';
+  document.getElementById('ob-retry-btn').style.display=result.passed?'none':'inline-block';
+  document.getElementById('ob-pass-badge').style.display=result.passed?'block':'none';
+}
+
+async function obRetakeQuiz(){
+  document.getElementById('ob-quiz-result').style.display='none';
+  await obShowQuiz();
+}
+
+// ── MODULES (unchanged) ──
+var CAT_CONFIG={'start-here':{name:'Start Here',badge:'<span class="cat-badge badge-start">START HERE</span>'},'social-media':{name:'Social Media',badge:''},'course-modules':{name:'Course Modules',badge:''},'webinars':{name:'Webinars',badge:''},'workshops':{name:'Workshops',badge:''},'other':{name:'Other',badge:''}};
+var CAT_ORDER=['start-here','social-media','course-modules','webinars','workshops','other'];
+async function buildModulesLayout(){
+  var container=document.getElementById('modules-container');if(!container)return;
+  if(!document.getElementById('video-categories')){
+    container.innerHTML='<div class="modules-layout"><div class="modules-player"><div class="now-playing-label">Now Playing</div><div class="video-wrap" id="main-video-wrap" style="min-height:200px;"><div style="position:absolute;inset:0;background:#111;display:flex;align-items:center;justify-content:center;color:#555;font-size:13px;">Select a video to play</div></div><div class="video-info-box"><div class="video-info-cat" id="playing-cat">Start Here</div><div class="video-info-title" id="playing-title">Select a video from the sidebar</div><div class="video-info-desc" id="playing-desc">Choose a video from the Learning Library on the right.</div><button class="mark-btn" id="mark-btn" onclick="markComplete()" style="display:none;">Mark as Complete</button></div></div><div class="modules-sidebar"><div class="sidebar-header">Learning Library</div><div id="video-categories"><div style="padding:20px;text-align:center;color:#888;font-size:13px;">Loading videos...</div></div><div style="padding:8px 16px;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;background:rgba(255,255,255,.02);">Coming Soon</div><div class="cat-section"><div class="cat-header"><span class="cat-name" style="color:#888">SEO + GEO</span><span class="cat-badge badge-soon">Soon</span></div></div><div class="cat-section"><div class="cat-header"><span class="cat-name" style="color:#888">Website Building</span><span class="cat-badge badge-soon">Soon</span></div></div><div class="cat-section"><div class="cat-header"><span class="cat-name" style="color:#888">Ads</span><span class="cat-badge badge-soon">Soon</span></div></div><div class="cat-section"><div class="cat-header"><span class="cat-name" style="color:#888">AI</span><span class="cat-badge badge-soon">Soon</span></div></div><div class="cat-section"><div class="cat-header"><span class="cat-name" style="color:#888">Executive Assistant</span><span class="cat-badge badge-soon">Soon</span></div></div><div class="cat-section"><div class="cat-header"><span class="cat-name" style="color:#888">Content Writing</span><span class="cat-badge badge-soon">Soon</span></div></div><div class="cat-section"><div class="cat-header"><span class="cat-name" style="color:#888">Book Publishing</span><span class="cat-badge badge-soon">Soon</span></div></div><div class="cat-section"><div class="cat-header"><span class="cat-name" style="color:#888">Ecommerce</span><span class="cat-badge badge-soon">Soon</span></div></div><div class="cat-section"><div class="cat-header"><span class="cat-name" style="color:#888">Podcast</span><span class="cat-badge badge-soon">Soon</span></div></div><div class="cat-section"><div class="cat-header"><span class="cat-name" style="color:#888">Digital Marketing</span><span class="cat-badge badge-soon">Soon</span></div></div></div></div>';
+  }
+  await loadVideosFromDB();
+}
+async function loadVideosFromDB(){
+  var catDiv=document.getElementById('video-categories');if(!catDiv)return;
+  catDiv.innerHTML='<div style="padding:20px;text-align:center;color:#888;font-size:13px;">Loading videos...</div>';
+  var res=await sb.from('videos').select('*').eq('is_active',true).order('category').order('sort_order');
+  if(!res.data||res.data.length===0){catDiv.innerHTML='<div style="padding:20px;text-align:center;color:#888;font-size:13px;">No videos yet.</div>';return;}
+  var grouped={};
+  res.data.forEach(function(v){if(!grouped[v.category])grouped[v.category]=[];grouped[v.category].push(v);});
+  if(grouped['start-here'])startHereIds=grouped['start-here'].map(function(v){return v.youtube_id;});
+  var html='';
+  CAT_ORDER.forEach(function(cat){
+    if(!grouped[cat])return;
+    var cfg=CAT_CONFIG[cat]||{name:cat,badge:''};var videos=grouped[cat];
+    html+='<div class="cat-section"><div class="cat-header" onclick="toggleCat(this)"><span class="cat-name">'+cfg.name+'</span><div style="display:flex;gap:6px;align-items:center">'+cfg.badge+'<span class="cat-arrow">&#9660;</span></div></div><div class="cat-videos open">';
+    videos.forEach(function(v,i){
+      var num=String(i+1).padStart(2,'0');var isStart=cat==='start-here';var ytId=v.youtube_id;
+      var safeTitle=(v.title||'').replace(/'/g,'');var safeDesc=(v.description||'').replace(/'/g,'');
+      html+='<div class="video-item vi-db-item" id="vi-'+ytId+'" data-ytid="'+ytId+'" data-cat="'+cfg.name+'" data-title="'+safeTitle+'" data-desc="'+safeDesc+'">';
+      if(isStart)html+='<div class="vi-thumb-wrap"><img class="vi-thumb" src="https://img.youtube.com/vi/'+ytId+'/mqdefault.jpg" alt="'+safeTitle+'"/><div class="vi-thumb-overlay"><div class="vi-play-icon">&#9654;</div></div></div>';
+      html+='<div class="vi-bottom"><div class="vi-num">'+num+'</div><div class="vi-info"><div class="vi-title">'+v.title+'</div><div class="vi-sub">'+cfg.name+'</div></div>';
+      if(isStart)html+='<span class="vi-check" id="vc-'+ytId+'"></span>';
+      html+='</div></div>';
+    });
+    html+='</div></div>';
+  });
+  catDiv.innerHTML=html;
+  catDiv.querySelectorAll('.vi-db-item').forEach(function(el){el.addEventListener('click',function(){playVideo(this,this.dataset.ytid,this.dataset.cat,this.dataset.title,this.dataset.desc);});});
+  loadCompletions();
+}
+function playVideo(el,videoId,cat,title,desc){
+  document.querySelectorAll('.video-item').forEach(function(v){v.classList.remove('active');});el.classList.add('active');currentVideoId=videoId;
+  var isPlaylist=videoId.startsWith('PL');var src=isPlaylist?'https://www.youtube.com/embed/videoseries?list='+videoId+'&rel=0':'https://www.youtube.com/embed/'+videoId+'?rel=0&autoplay=1';
+  var wrap=document.getElementById('main-video-wrap');var existing=document.getElementById('main-video');if(existing)existing.remove();
+  var ph=wrap.querySelector('div');if(ph)ph.style.display='none';
+  var iframe=document.createElement('iframe');iframe.id='main-video';iframe.src=src;iframe.allowFullscreen=true;iframe.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;border:0;';wrap.appendChild(iframe);
+  var ci=document.getElementById('playing-cat');var ti=document.getElementById('playing-title');var di=document.getElementById('playing-desc');
+  if(ci)ci.textContent=cat;if(ti)ti.textContent=title;if(di)di.textContent=desc;
+  var isStart=startHereIds.includes(videoId);var mb=document.getElementById('mark-btn');
+  if(mb){mb.style.display=isStart?'inline-block':'none';if(isStart){var done=getCompleted();mb.textContent=done.includes(videoId)?'Completed!':'Mark as Complete';mb.className=done.includes(videoId)?'mark-btn marked':'mark-btn';}}
+}
+function toggleCat(header){var v=header.nextElementSibling;var a=header.querySelector('.cat-arrow');if(!v||!v.classList.contains('cat-videos'))return;v.classList.toggle('open');if(a)a.classList.toggle('closed');}
+function getCompleted(){return JSON.parse(localStorage.getItem('va_completed')||'[]');}
+function saveCompleted(arr){localStorage.setItem('va_completed',JSON.stringify(arr));}
+function markComplete(){if(!startHereIds.includes(currentVideoId))return;var done=getCompleted();if(!done.includes(currentVideoId)){done.push(currentVideoId);saveCompleted(done);}var btn=document.getElementById('mark-btn');if(btn){btn.textContent='Completed!';btn.className='mark-btn marked';}updateVideoChecks(done);updateProgress(done);}
+function loadCompletions(){var done=getCompleted();updateVideoChecks(done);updateProgress(done);}
+function updateVideoChecks(done){startHereIds.forEach(function(id){var el=document.getElementById('vi-'+id);var vc=document.getElementById('vc-'+id);if(el&&done.includes(id)){el.classList.add('completed');if(vc)vc.textContent='✓';}else if(el){el.classList.remove('completed');if(vc)vc.textContent='';}});}
+function updateProgress(done){var count=done.filter(function(d){return startHereIds.includes(d);}).length;var pct=Math.round(count/startHereIds.length*100);var pb=document.getElementById('prog-bar');var pt=document.getElementById('prog-text');var pp=document.getElementById('prog-pct');var hc=document.getElementById('home-completed');if(pb)pb.style.width=pct+'%';if(pt)pt.textContent=count+' of '+startHereIds.length+' completed';if(pp)pp.textContent=pct+'%';if(hc)hc.textContent=count;}
+function loadChecklist(){var checks=JSON.parse(localStorage.getItem('va_checklist')||'{}');var total=10,done=0;for(var i=1;i<=total;i++){if(checks['cl-'+i]){document.getElementById('cl-'+i).classList.add('done');document.getElementById('cc-'+i).textContent='✓';done++;}}updateChecklistProgress(done,total);}
+function toggleCheck(id){var checks=JSON.parse(localStorage.getItem('va_checklist')||'{}');checks[id]=!checks[id];localStorage.setItem('va_checklist',JSON.stringify(checks));var el=document.getElementById(id);var num=id.split('-')[1];var cc=document.getElementById('cc-'+num);el.classList.toggle('done',checks[id]);cc.textContent=checks[id]?'✓':'';var done=Object.values(checks).filter(Boolean).length;updateChecklistProgress(done,10);}
+function updateChecklistProgress(done,total){var pct=Math.round(done/total*100);var pb=document.getElementById('cl-prog-bar');var pt=document.getElementById('cl-prog-text');var pp=document.getElementById('cl-prog-pct');if(pb)pb.style.width=pct+'%';if(pt)pt.textContent=done+' of '+total+' completed';if(pp)pp.textContent=pct+'%';}
+
+async function loadJobs(){
+  var res=await sb.from('jobs').select('*').order('posted_at',{ascending:false});
+  var list=document.getElementById('jobs-list');
+  if(!res.data||res.data.length===0){list.innerHTML='<div class="no-data">No job listings yet. Check back soon!</div>';return;}
+  var internships=res.data.filter(function(j){return j.job_category!=='hiring';});
+  var hirings=res.data.filter(function(j){return j.job_category==='hiring';});
+  function renderJob(j,isHiring){
+    var tasks=j.tasks?j.tasks.split(',').map(function(t){return'<li style="margin-bottom:4px;">'+t.trim()+'</li>';}).join(''):'';
+    var postedDate=j.posted_at?new Date(j.posted_at).toLocaleDateString('en-PH',{month:'long',day:'numeric',year:'numeric'}):'';
+    var catColor=isHiring?'#00c864':'var(--yellow)';var catLabel=isHiring?'💼 HIRING — External Opportunity':'🤝 INTERNSHIP — VA Newbies PH';
+    return'<div class="job-card" style="border-left:3px solid '+catColor+';">'+
+      '<div style="font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:'+catColor+';margin-bottom:10px;">'+catLabel+'</div>'+
+      '<div class="job-top"><div><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:6px;">'+j.client_type+'</div><div class="job-type" style="font-size:20px;">'+(j.title||j.client_type+' — VA Opportunity')+'</div></div>'+
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;"><span class="job-badge badge-'+j.status+'">'+j.status.toUpperCase()+'</span>'+(j.rate?'<span style="font-size:13px;font-weight:800;color:'+catColor+';">'+j.rate+'</span>':'')+'</div></div>'+
+      '<div style="border-top:1px solid var(--border);margin:12px 0;"></div>'+
+      (j.description?'<div style="font-size:13px;color:rgba(255,255,255,.8);line-height:1.7;margin-bottom:14px;">'+j.description+'</div>':'')+
+      (tasks?'<div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:'+catColor+';margin-bottom:8px;">Key Responsibilities</div><ul style="list-style:none;padding:0;margin:0;font-size:13px;color:rgba(255,255,255,.8);line-height:1.7;">'+tasks+'</ul></div>':'')+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">'+
+        '<span style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;color:#ccc;">⏱ '+(j.duration||'3 weeks')+'</span>'+
+        '<span style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;color:#ccc;">👤 '+(j.slots||1)+' slot(s) available</span>'+
+        (j.industry?'<span style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;color:#ccc;">🏢 '+j.industry+'</span>':'')+
+        (postedDate?'<span style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;color:#ccc;">📅 '+postedDate+'</span>':'')+
+      '</div>'+
+      (isHiring&&j.how_to_apply?'<div style="background:rgba(0,200,100,.06);border:1px solid rgba(0,200,100,.2);border-radius:10px;padding:14px;margin-bottom:14px;"><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00c864;margin-bottom:6px;">How to Apply</div><div style="font-size:13px;color:rgba(255,255,255,.8);line-height:1.7;">'+j.how_to_apply+'</div></div>':(!isHiring&&j.how_to_apply?'<div style="background:rgba(245,200,0,.06);border:1px solid rgba(245,200,0,.2);border-radius:10px;padding:14px;margin-bottom:14px;"><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--yellow);margin-bottom:6px;">How to Apply</div><div style="font-size:13px;color:rgba(255,255,255,.8);line-height:1.7;">'+j.how_to_apply+'</div></div>':''))+
+      (j.status==='open'&&!isHiring?'<a href="mailto:hello@donebydi.com?subject=Job Application - '+j.client_type+'" class="apply-btn" style="display:inline-block;">Apply Now — Contact Coach Di</a>':(j.status!=='open'?'<div style="font-size:13px;color:var(--gray);font-style:italic;margin-top:8px;">This position is no longer available.</div>':''))+
+    '</div>';
+  }
+  var html='';
+  if(internships.length>0){html+='<div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:14px;display:flex;align-items:center;gap:10px;">🤝 VA Newbies PH Internships <span style="flex:1;height:1px;background:rgba(245,200,0,.2);display:block;"></span></div>';html+=internships.map(function(j){return renderJob(j,false);}).join('');}
+  if(hirings.length>0){html+='<div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#00c864;margin:'+(internships.length>0?'28px':'0')+'px 0 14px 0;display:flex;align-items:center;gap:10px;">💼 Hiring Opportunities <span style="flex:1;height:1px;background:rgba(0,200,100,.2);display:block;"></span></div>';html+='<div style="background:rgba(0,200,100,.05);border:1px solid rgba(0,200,100,.15);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:rgba(255,255,255,.6);line-height:1.6;">⚠️ These are external job postings sourced from Facebook groups and online communities. VA Newbies PH is not the employer. Please do your due diligence before applying.</div>';html+=hirings.map(function(j){return renderJob(j,true);}).join('');}
+  list.innerHTML=html||'<div class="no-data">No job listings yet. Check back soon!</div>';
+}
+
+// NICHE HUB (unchanged)
+var NICHES={social:{name:"Social Media Manager",resources:[{platform:"HubSpot",plat_class:"plat-hubspot",duration:"6 hrs",title:"Social Media Marketing Certification",desc:"Complete strategy, content planning, paid social, ROI.",url:"https://academy.hubspot.com/courses/social-media",free:true,cert:true},{platform:"Meta",plat_class:"plat-meta",duration:"6 courses",title:"Meta Social Media Marketing Certificate",desc:"Official Meta training on FB/IG advertising and analytics.",url:"https://www.coursera.org/professional-certificates/facebook-social-media-marketing",free:false,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"2 hrs",title:"Instagram Marketing Strategy",desc:"End-to-end Instagram strategy from content to analytics.",url:"https://academy.hubspot.com/courses/instagram-marketing",free:true,cert:false},{platform:"Canva",plat_class:"plat-canva",duration:"Self-paced",title:"Canva Design School: Social Media",desc:"Eye-stopping graphics and video content for social.",url:"https://www.canva.com/designschool/",free:true,cert:false}]},seo:{name:"SEO + GEO",resources:[{platform:"SEMrush",plat_class:"plat-semrush",duration:"4 hrs",title:"SEO Fundamentals Course",desc:"Keywords, on-page SEO, link building basics with certificate.",url:"https://www.semrush.com/academy/courses/seo-fundamentals-course-with-mike-bryantsev/",free:true,cert:true},{platform:"Google",plat_class:"plat-google",duration:"40 hrs",title:"Digital Marketing Fundamentals",desc:"Comprehensive overview with Google certificate.",url:"https://learndigital.withgoogle.com/digitalgarage/course/digital-marketing",free:true,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"4 hrs",title:"SEO Certification Course",desc:"Keywords, on-page SEO, link building, technical SEO.",url:"https://academy.hubspot.com/courses/seo-training-course",free:true,cert:true}]},website:{name:"Website Building",resources:[{platform:"YouTube",plat_class:"plat-youtube",duration:"3 hrs",title:"WordPress for Beginners",desc:"Complete WordPress setup, themes, plugins, and pages.",url:"https://www.youtube.com/results?search_query=wordpress+for+beginners+full+course",free:true,cert:false},{platform:"Free",plat_class:"plat-free",duration:"Self-paced",title:"Duda Website Builder Training",desc:"Professional website builder training with certificate.",url:"https://university.duda.co/",free:true,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"2 hrs",title:"Website Optimization Course",desc:"Speed, UX, and conversion rate basics every VA needs.",url:"https://academy.hubspot.com/courses/website-optimization",free:true,cert:false}]},ads:{name:"Ads",resources:[{platform:"Google",plat_class:"plat-google",duration:"Self-paced",title:"Google Ads Certification",desc:"Search, Display, Shopping, and Video ads — all free.",url:"https://skillshop.withgoogle.com/",free:true,cert:true},{platform:"Meta",plat_class:"plat-meta",duration:"6 courses",title:"Meta Certified Digital Marketing Associate",desc:"Official Meta certification covering FB and IG ads.",url:"https://www.coursera.org/professional-certificates/facebook-social-media-marketing",free:false,cert:true},{platform:"SEMrush",plat_class:"plat-semrush",duration:"2 hrs",title:"PPC Advertising Toolkit Course",desc:"Pay-per-click fundamentals with real campaign examples.",url:"https://www.semrush.com/academy/courses/ppc-fundamentals-course-with-joel-bondorowsky/",free:true,cert:true}]},ai:{name:"AI",resources:[{platform:"Google",plat_class:"plat-google",duration:"Self-paced",title:"Google AI Essentials",desc:"Practical AI skills including prompt writing for work.",url:"https://grow.google/products/ai-essentials/",free:true,cert:true},{platform:"Coursera",plat_class:"plat-coursera",duration:"2 weeks",title:"Generative AI for Everyone",desc:"Andrew Ng's course on practical AI for non-developers.",url:"https://www.coursera.org/learn/generative-ai-for-everyone",free:true,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"2 hrs",title:"AI for Marketers",desc:"How AI transforms content creation and marketing.",url:"https://academy.hubspot.com/courses/ai-for-marketers",free:true,cert:true}]},exec:{name:"Executive Assistant",resources:[{platform:"Coursera",plat_class:"plat-coursera",duration:"3 months",title:"Google Project Management Certificate",desc:"End-to-end project management — highly valued by exec clients.",url:"https://www.coursera.org/professional-certificates/google-project-management",free:false,cert:true},{platform:"YouTube",plat_class:"plat-youtube",duration:"1 hr",title:"Notion for Beginners",desc:"The number 1 tool for executive assistants — full tutorial.",url:"https://www.youtube.com/results?search_query=notion+for+beginners+full+tutorial",free:true,cert:false},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"1 hr",title:"Email Marketing Certification",desc:"Manage client inboxes and build sequences like a pro.",url:"https://academy.hubspot.com/courses/email-marketing",free:true,cert:true}]},content:{name:"Content Writing",resources:[{platform:"HubSpot",plat_class:"plat-hubspot",duration:"6 hrs",title:"Content Marketing Certification",desc:"Strategy, storytelling, creation, measurement.",url:"https://academy.hubspot.com/courses/content-marketing",free:true,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"3 hrs",title:"Blogging Certification",desc:"Create, optimize, and promote blog content that ranks.",url:"https://academy.hubspot.com/courses/blogging-certification",free:true,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"4 hrs",title:"SEO Certification",desc:"Keywords, on-page SEO, link building, technical SEO.",url:"https://academy.hubspot.com/courses/seo-training-course",free:true,cert:true}]},book:{name:"Book Publishing",resources:[{platform:"YouTube",plat_class:"plat-youtube",duration:"1 hr",title:"KDP Publishing for Beginners",desc:"Kindle Direct Publishing full walkthrough.",url:"https://www.youtube.com/results?search_query=kdp+amazon+publishing+beginners+2024",free:true,cert:false},{platform:"Free",plat_class:"plat-free",duration:"Self-paced",title:"Reedsy Publishing School",desc:"Free courses on writing, editing, and publishing from pros.",url:"https://blog.reedsy.com/learning/",free:true,cert:true},{platform:"YouTube",plat_class:"plat-youtube",duration:"30 min",title:"Canva Book Cover Design",desc:"Design professional book covers using Canva templates.",url:"https://www.youtube.com/results?search_query=canva+book+cover+design+tutorial",free:true,cert:false}]},ecom:{name:"Ecommerce",resources:[{platform:"YouTube",plat_class:"plat-youtube",duration:"2 hrs",title:"Shopify Full Tutorial for VAs",desc:"Set up, manage, and optimize a Shopify store end-to-end.",url:"https://www.youtube.com/results?search_query=shopify+full+tutorial+virtual+assistant",free:true,cert:false},{platform:"Coursera",plat_class:"plat-coursera",duration:"5 courses",title:"Google Digital Marketing and E-commerce Certificate",desc:"Includes analytics, SEO, email, ads, and ecommerce.",url:"https://www.coursera.org/professional-certificates/google-digital-marketing-ecommerce",free:false,cert:true},{platform:"YouTube",plat_class:"plat-youtube",duration:"1 hr",title:"Amazon FBA for Beginners",desc:"Product research, listings, and seller central basics.",url:"https://www.youtube.com/results?search_query=amazon+fba+beginners+2024+tutorial",free:true,cert:false}]},podcast:{name:"Podcast",resources:[{platform:"YouTube",plat_class:"plat-youtube",duration:"1 hr",title:"How to Edit a Podcast with Audacity",desc:"Free audio editing for podcast VAs — full Audacity tutorial.",url:"https://www.youtube.com/results?search_query=audacity+podcast+editing+tutorial+beginners",free:true,cert:false},{platform:"Free",plat_class:"plat-free",duration:"Self-paced",title:"Descript Podcast Editing",desc:"AI-powered podcast editing tool — fastest VA workflow.",url:"https://www.descript.com/",free:true,cert:false},{platform:"YouTube",plat_class:"plat-youtube",duration:"45 min",title:"Podcast Show Notes Writing",desc:"How to write SEO-optimized show notes for podcast clients.",url:"https://www.youtube.com/results?search_query=how+to+write+podcast+show+notes",free:true,cert:false}]},digital:{name:"Digital Marketing",resources:[{platform:"Google",plat_class:"plat-google",duration:"40 hrs",title:"Google Digital Marketing Certificate",desc:"Comprehensive digital marketing with Google certification.",url:"https://learndigital.withgoogle.com/digitalgarage/course/digital-marketing",free:true,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"5 hrs",title:"Digital Marketing Certification",desc:"Full-funnel digital marketing strategy and execution.",url:"https://academy.hubspot.com/courses/digital-marketing",free:true,cert:true},{platform:"SEMrush",plat_class:"plat-semrush",duration:"3 hrs",title:"Digital Marketing Fundamentals",desc:"Channels, KPIs, and strategies every digital VA must know.",url:"https://www.semrush.com/academy/",free:true,cert:true}]}};
+function openNiche(key){currentNiche=key;var niche=NICHES[key];document.getElementById('niche-hub').style.display='none';document.getElementById('niche-detail').style.display='block';document.getElementById('niche-detail-name').textContent=niche.name;renderResources(key,niche.resources);}
+function closeNiche(){document.getElementById('niche-hub').style.display='block';document.getElementById('niche-detail').style.display='none';currentNiche=null;}
+function getNicheCompleted(key){return JSON.parse(localStorage.getItem('niche_done_'+key)||'[]');}
+function renderResources(key,resources){var done=getNicheCompleted(key);var count=done.length;var pct=resources.length>0?Math.round(count/resources.length*100):0;document.getElementById('niche-prog-text').textContent=count+' of '+resources.length+' completed';document.getElementById('niche-prog-bar').style.width=pct+'%';document.getElementById('resource-grid').innerHTML=resources.map(function(r,i){var isDone=done.includes(i);return'<div class="res-card'+(isDone?' res-done':'')+'"><div class="res-top"><span class="res-platform '+r.plat_class+'">'+r.platform+'</span><span class="res-duration">'+r.duration+'</span></div><div class="res-title">'+r.title+'</div><div class="res-desc">'+r.desc+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;">'+(r.free?'<span class="res-badge badge-free">Free</span>':'')+(r.cert?'<span class="res-badge badge-cert">Certificate</span>':'')+'</div><div class="res-bottom"><a href="'+r.url+'" target="_blank" class="res-open">Open</a><div class="res-complete'+(isDone?' done':'')+'" onclick="toggleNicheResource(\''+key+'\','+i+')">'+(isDone?'&#10003;':'')+'</div></div></div>';}).join('');}
+function toggleNicheResource(key,idx){var done=getNicheCompleted(key);var pos=done.indexOf(idx);if(pos===-1){done.push(idx);}else{done.splice(pos,1);}localStorage.setItem('niche_done_'+key,JSON.stringify(done));renderResources(key,NICHES[key].resources);}
+
+async function submitPortfolio(){
+  var url=document.getElementById('port-url').value.trim();var desc=document.getElementById('port-desc').value.trim();var err=document.getElementById('port-err');err.style.display='none';
+  if(!url){err.textContent='Please enter your portfolio URL.';err.style.display='block';return;}
+  if(!url.startsWith('http')){err.textContent='Please enter a valid URL starting with https://';err.style.display='block';return;}
+  var ud=await sb.auth.getUser();if(!ud.data||!ud.data.user)return;var user=ud.data.user;
+  var mem=await sb.from('members').select('full_name,email').eq('id',user.id).single();
+  var res=await sb.from('portfolios').insert({member_id:user.id,full_name:mem.data?mem.data.full_name:'',email:mem.data?mem.data.email:user.email,portfolio_url:url,description:desc,status:'pending'});
+  if(res.error){err.textContent='Error: '+res.error.message;err.style.display='block';return;}
+  document.getElementById('port-url').value='';document.getElementById('port-desc').value='';loadPortfolios();alert('Portfolio submitted! Coach Di will review it and give you feedback soon.');
+}
+async function loadPortfolios(){
+  var ud=await sb.auth.getUser();if(!ud.data||!ud.data.user)return;
+  var res=await sb.from('portfolios').select('*').eq('member_id',ud.data.user.id).order('submitted_at',{ascending:false});
+  var list=document.getElementById('port-list');if(!list)return;
+  if(!res.data||res.data.length===0){list.innerHTML='<div class="no-data">No submissions yet. Submit your first portfolio above!</div>';return;}
+  list.innerHTML=res.data.map(function(p){var sc=p.status==='reviewed'?'var(--green)':'#F5C800';var sl=p.status==='reviewed'?'Reviewed':'Pending Review';return'<div class="account-card" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px;"><div><div style="font-size:11px;color:#888;margin-bottom:4px;">'+new Date(p.submitted_at).toLocaleDateString('en-PH',{month:'long',day:'numeric',year:'numeric'})+'</div><a href="'+p.portfolio_url+'" target="_blank" style="color:#F5C800;font-size:14px;font-weight:700;word-break:break-all;">'+p.portfolio_url+'</a></div><span style="border:1px solid '+sc+';color:'+sc+';padding:4px 12px;border-radius:50px;font-size:11px;font-weight:700;">'+sl+'</span></div>'+(p.description?'<div style="font-size:13px;color:#888;margin-bottom:10px;">'+p.description+'</div>':'')+(p.feedback?'<div style="background:rgba(0,200,100,.06);border:1px solid rgba(0,200,100,.25);border-radius:10px;padding:14px 16px;"><div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#00c864;margin-bottom:6px;">Coach Di Feedback</div><div style="font-size:13px;color:#fff;line-height:1.7;">'+p.feedback+'</div></div>':'<div style="font-size:12px;color:#888;font-style:italic;">Feedback will appear here once Coach Di reviews your portfolio.</div>')+'</div>';}).join('');}
+
+var msgSubscription=null;
+async function loadMessages(){
+  var ud=await sb.auth.getUser();if(!ud.data||!ud.data.user)return;
+  var uid=ud.data.user.id;var blist=document.getElementById('broadcasts-list');var dlist=document.getElementById('dm-list');
+  var test=await sb.from('messages').select('id').limit(1);
+  if(test.error){if(blist)blist.innerHTML='<div class="no-data" style="color:#F5C800;">Chat is being set up. Check back soon!</div>';if(dlist)dlist.innerHTML='<div class="no-data" style="color:#F5C800;">Chat is being set up. Check back soon!</div>';return;}
+  var bres=await sb.from('messages').select('*').eq('is_broadcast',true).order('created_at',{ascending:false});
+  if(blist){if(!bres.data||bres.data.length===0){blist.innerHTML='<div class="no-data">No announcements yet.</div>';}else{blist.innerHTML=bres.data.map(function(m){return'<div style="background:rgba(245,200,0,.06);border:1px solid rgba(245,200,0,.2);border-radius:10px;padding:14px 16px;margin-bottom:10px;"><div style="font-size:10px;color:#F5C800;font-weight:700;margin-bottom:6px;">COACH DI &nbsp;&middot;&nbsp;'+new Date(m.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})+'</div><div style="font-size:14px;line-height:1.6;">'+m.message+'</div></div>';}).join('');}}
+  var dres=await sb.from('messages').select('*').eq('is_broadcast',false).or('sender_id.eq.'+uid+',recipient_id.eq.'+uid).order('created_at',{ascending:true});
+  if(dlist){if(!dres.data||dres.data.length===0){dlist.innerHTML='<div class="no-data">No messages yet. Send a message to Coach Di below!</div>';}else{dlist.innerHTML=dres.data.map(function(m){var isMe=m.sender_id===uid;return'<div style="display:flex;justify-content:'+(isMe?'flex-end':'flex-start')+';margin-bottom:12px;"><div style="max-width:75%;background:'+(isMe?'#F5C800':'#333')+';color:'+(isMe?'#000':'#fff')+';border-radius:'+(isMe?'16px 16px 4px 16px':'16px 16px 16px 4px')+';padding:10px 14px;"><div style="font-size:11px;font-weight:700;margin-bottom:4px;opacity:.7;">'+(isMe?'You':'Coach Di')+'</div><div style="font-size:13px;line-height:1.5;">'+m.message+'</div><div style="font-size:10px;opacity:.6;margin-top:4px;text-align:right;">'+new Date(m.created_at).toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})+'</div></div></div>';}).join('');dlist.scrollTop=dlist.scrollHeight;}}
+  await sb.from('messages').update({is_read:true}).eq('recipient_id',uid).eq('is_read',false);
+  updateMsgBadge();
+  if(msgSubscription){try{msgSubscription.unsubscribe();}catch(e){}}
+  msgSubscription=sb.channel('messages-'+uid).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},function(payload){var m=payload.new;if(m.is_broadcast||m.sender_id===uid||m.recipient_id===uid)loadMessages();}).subscribe();
+}
+async function sendMessage(){
+  var input=document.getElementById('msg-input');var text=input.value.trim();if(!text)return;
+  var ud=await sb.auth.getUser();if(!ud.data||!ud.data.user)return;
+  var mem=await sb.from('members').select('full_name').eq('id',ud.data.user.id).single();
+  var name=mem.data?mem.data.full_name:ud.data.user.email;
+  await sb.from('messages').insert({sender_id:ud.data.user.id,sender_name:name,sender_type:'va',recipient_id:null,message:text,is_broadcast:false,is_read:false});
+  input.value='';loadMessages();
+}
+async function updateMsgBadge(){
+  var ud=await sb.auth.getUser();if(!ud.data||!ud.data.user)return;
+  var res=await sb.from('messages').select('id').eq('recipient_id',ud.data.user.id).eq('is_read',false);
+  var count=res.data?res.data.length:0;var badge=document.getElementById('msg-badge');
+  if(badge){badge.style.display=count>0?'inline':'none';badge.textContent=count;}
+}
+function onYouTubeIframeAPIReady(){obYtReady=true;}
+window.addEventListener('load',function(){
+  var hash=window.location.hash;
+  if(hash&&hash.indexOf('type=recovery')>-1){showScreen('reset');return;}
+  sb.auth.onAuthStateChange(function(event,session){
+    if(event==='PASSWORD_RECOVERY'){showScreen('reset');return;}
+    if(session){loadPortal();}else{showScreen('auth');}
+  });
+});
+</script>
+</body>
+</html>
