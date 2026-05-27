@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VA Newbies PH — Member Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--black:#0D0D0D;--yellow:#F5C800;--red:#CC0000;--dark:#1A1A1A;--card:#222;--gray:#888;--white:#FFF;--border:#333;--green:#00c864;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:#0D0D0D;font-family:"Segoe UI",sans-serif;color:#FFF;min-height:100vh;}
+.screen{display:none;}.screen.active{display:block;}
+.center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0D0D0D;}
+.auth-box{background:#1A1A1A;border:1px solid #333;border-radius:16px;padding:36px 28px;width:100%;max-width:420px;}
+.auth-logo{text-align:center;margin-bottom:28px;}
+.brand-tag{font-size:13px;font-weight:700;letter-spacing:2px;color:#F5C800;text-transform:uppercase;}
+.auth-box h1{font-size:26px;font-weight:800;margin-top:6px;text-align:center;}
+.auth-box h1 span{color:#CC0000;}
+.auth-tabs{display:flex;margin-bottom:24px;background:#0D0D0D;border-radius:10px;padding:4px;}
+.auth-tab{flex:1;padding:9px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;border-radius:8px;color:#888;border:none;background:none;}
+.auth-tab.active{background:#F5C800;color:#000;}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.field label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#888;}
+.field input,.field select{background:#0D0D0D;border:1px solid #333;border-radius:8px;padding:11px 13px;color:#FFF;font-size:14px;outline:none;width:100%;font-family:inherit;}
+.field input:focus,.field select:focus{border-color:#F5C800;}
+.field select option{background:#1A1A1A;}
+.tier-info{background:rgba(245,200,0,.06);border:1px solid rgba(245,200,0,.2);border-radius:8px;padding:10px 13px;font-size:12px;color:#F5C800;margin-bottom:14px;line-height:1.6;display:none;}
+.btn{width:100%;padding:13px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;}
+.btn-yellow{background:#F5C800;color:#000;}
+.err{color:#ff6b6b;font-size:12px;margin-top:10px;display:none;}
+.status-box{background:#1A1A1A;border-radius:16px;padding:40px 28px;max-width:460px;width:100%;text-align:center;}
+.status-icon{font-size:52px;margin-bottom:16px;}
+.status-box h2{font-size:24px;margin-bottom:12px;}
+.status-box p{color:#888;font-size:14px;line-height:1.7;}
+.logout-btn{margin-top:20px;background:transparent;border:1px solid #333;color:#888;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;}
+#screen-portal{background:#0D0D0D;}
+.portal-nav{background:#1A1A1A;border-bottom:2px solid #F5C800;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:9999;}
+.nav-brand{font-size:13px;font-weight:800;letter-spacing:1.5px;color:#F5C800;text-transform:uppercase;}
+.nav-logout{background:transparent;border:1px solid #333;color:#888;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;}
+.portal-tabs{display:flex;gap:4px;padding:0 24px;border-bottom:1px solid #333;overflow-x:auto;background:#1A1A1A;position:sticky;top:60px;z-index:9998;}
+.tab-btn{padding:14px 18px;font-size:13px;font-weight:600;color:#888;background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab-btn.active{color:#F5C800;border-bottom-color:#F5C800;}
+.tab-content{display:none;padding:24px;}
+.tab-content.active{display:block;}
+.dash-welcome{background:linear-gradient(135deg,#1a1200,#2a1800);border:1px solid rgba(245,200,0,.25);border-radius:16px;padding:28px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+.dash-welcome h2{font-size:24px;font-weight:800;margin-bottom:6px;}
+.dash-welcome h2 span{color:#F5C800;}
+.dash-welcome p{color:#888;font-size:14px;line-height:1.6;}
+.tier-badge{padding:8px 20px;border-radius:50px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
+.tier-starter{background:#F5C800;color:#000;}.tier-core{background:#CC0000;color:#FFF;}.tier-pro{background:#444;color:#FFF;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px;}
+.stat-card{background:#222;border:1px solid #333;border-radius:14px;padding:18px 16px;}
+.s-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:10px;}
+.s-val{font-size:24px;font-weight:800;color:#F5C800;margin-bottom:4px;}
+.s-sub{font-size:11px;color:#888;}
+.stat-card.red-card .s-val{color:#CC0000;}.stat-card.green-card .s-val{color:#00c864;}
+.progress-wrap{background:#222;border:1px solid #333;border-radius:14px;padding:20px;margin-bottom:22px;}
+.progress-wrap h3{font-size:13px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+.prog-bar-wrap{background:#333;border-radius:50px;height:10px;overflow:hidden;margin-bottom:8px;}
+.prog-bar{height:100%;background:linear-gradient(90deg,#F5C800,#e6b800);border-radius:50px;transition:width .5s;}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;color:#888;}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px;}
+.info-card{background:#222;border:1px solid #333;border-radius:14px;padding:20px;}
+.info-card h3{font-size:13px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+.info-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px;}
+.info-row:last-child{border-bottom:none;}
+.info-row .i-label{color:#888;}
+.info-row .i-val{font-weight:600;}
+.i-val.active{color:#00c864;}
+.notice-card{background:linear-gradient(135deg,#1a0000,#2a0800);border:1px solid rgba(204,0,0,.3);border-radius:14px;padding:20px;margin-bottom:22px;}
+.notice-card h3{font-size:13px;font-weight:700;color:#CC0000;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
+.notice-item{display:flex;gap:12px;margin-bottom:10px;font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;}
+.notice-item:last-child{margin-bottom:0;}
+.notice-dot{width:6px;height:6px;background:#CC0000;border-radius:50%;flex-shrink:0;margin-top:6px;}
+.section-title{font-size:15px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.section-title::after{content:"";flex:1;height:1px;background:#333;}
+.quick-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+.quick-card{background:#222;border:1px solid #333;border-radius:12px;padding:16px;cursor:pointer;text-align:center;transition:border-color .2s;}
+.quick-card:hover{border-color:#F5C800;}
+.q-icon{font-size:24px;margin-bottom:8px;}
+.q-label{font-size:12px;font-weight:700;color:#FFF;}
+.q-sub{font-size:11px;color:#888;margin-top:3px;}
+.modules-layout{display:grid;grid-template-columns:1fr 320px;gap:20px;}
+.modules-player{display:flex;flex-direction:column;}
+.now-playing-label{font-size:10px;font-weight:700;letter-spacing:2px;color:#F5C800;text-transform:uppercase;margin-bottom:8px;}
+.video-wrap{position:relative;width:100%;padding-bottom:56.25%;border-radius:12px 12px 0 0;overflow:hidden;background:#111;margin-bottom:0;}
+.video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;}
+.video-info-box{background:#222;border:1px solid #333;border-radius:0 0 12px 12px;padding:14px 16px;}
+.video-info-cat{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#F5C800;margin-bottom:4px;}
+.video-info-title{font-size:16px;font-weight:800;margin-bottom:6px;}
+.video-info-desc{font-size:13px;color:#888;line-height:1.6;}
+.mark-btn{margin-top:12px;background:transparent;border:1px solid #00c864;color:#00c864;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.mark-btn.marked{background:#00c864;color:#000;}
+.modules-sidebar{background:#1A1A1A;border:1px solid #333;border-radius:12px;overflow:hidden;max-height:700px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#333 #1A1A1A;}
+.sidebar-header{padding:12px 16px;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#F5C800;border-bottom:1px solid #333;background:#111;position:sticky;top:0;z-index:5;}
+.lib-cat-block{border-bottom:1px solid #2a2a2a;}
+.lib-cat-block:last-child{border-bottom:none;}
+.lib-cat-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;transition:background .15s;}
+.lib-cat-header:hover{background:rgba(245,200,0,.05);}
+.lib-cat-left{display:flex;align-items:center;gap:8px;}
+.lib-cat-name{font-size:12px;font-weight:700;color:#FFF;}
+.lib-cat-count{font-size:9px;font-weight:700;padding:2px 7px;border-radius:50px;background:rgba(245,200,0,.12);color:#F5C800;text-transform:uppercase;letter-spacing:.5px;}
+.lib-cat-chevron{font-size:10px;color:#888;transition:transform .22s;display:inline-block;}
+.lib-cat-block.open .lib-cat-chevron{transform:rotate(180deg);}
+.lib-cat-block.cat-start .lib-cat-name{color:#F5C800;}
+.lib-cat-block.cat-start .lib-cat-header{background:rgba(245,200,0,.04);}
+.lib-cat-body{display:none;}
+.lib-cat-block.open .lib-cat-body{display:block;}
+.lib-vid-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid rgba(255,255,255,.03);cursor:pointer;transition:background .15s;}
+.lib-vid-row:hover{background:rgba(245,200,0,.05);}
+.lib-vid-row.active{background:rgba(245,200,0,.1);border-left:3px solid #F5C800;padding-left:9px;}
+.lib-vid-thumb{width:80px;height:45px;border-radius:6px;object-fit:cover;flex-shrink:0;background:#111;border:1px solid #2a2a2a;display:block;}
+.lib-vid-thumb-placeholder{width:80px;height:45px;border-radius:6px;background:#222;border:1px solid #2a2a2a;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;color:#555;}
+.lib-vid-info{flex:1;min-width:0;}
+.lib-vid-num{width:18px;height:18px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#888;flex-shrink:0;}
+.lib-vid-row.active .lib-vid-num{background:#F5C800;color:#000;}
+.lib-vid-row.completed .lib-vid-num{background:#00c864;color:#000;}
+.lib-vid-title{font-size:11px;font-weight:600;color:#FFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lib-vid-sub{font-size:10px;color:#888;margin-top:1px;}
+.lib-vid-check{font-size:11px;color:#00c864;flex-shrink:0;}
+.lib-coming-soon-header{padding:8px 14px;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;background:rgba(255,255,255,.02);border-top:1px solid #333;}
+.lib-coming-soon-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid rgba(255,255,255,.03);}
+.lib-cs-name{font-size:11px;color:#555;font-weight:600;}
+.lib-cs-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:50px;background:#2a2a2a;color:#555;text-transform:uppercase;}
+.checklist{display:flex;flex-direction:column;gap:10px;}
+.check-item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border:1px solid #333;border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .2s;}
+.check-item.done{background:rgba(0,200,100,.06);border-color:rgba(0,200,100,.25);}
+.check-circle{width:22px;height:22px;border-radius:50%;border:2px solid #333;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;}
+.check-item.done .check-circle{background:#00c864;border-color:#00c864;color:#000;}
+.check-text{font-size:13px;font-weight:600;flex:1;}
+.check-item.done .check-text{text-decoration:line-through;color:#888;}
+.job-card{background:#222;border:1px solid #333;border-radius:12px;padding:20px;margin-bottom:14px;}
+.job-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+.job-type{font-size:16px;font-weight:800;}
+.job-badge{padding:4px 12px;border-radius:50px;font-size:11px;font-weight:700;text-transform:uppercase;}
+.badge-open{background:rgba(0,200,100,.15);color:#00c864;border:1px solid rgba(0,200,100,.3);}
+.badge-filled{background:rgba(204,0,0,.15);color:#CC0000;border:1px solid rgba(204,0,0,.3);}
+.job-desc{font-size:13px;color:#888;line-height:1.6;margin-bottom:10px;}
+.apply-btn{display:inline-block;margin-top:14px;background:#F5C800;color:#000;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;}
+.no-data{text-align:center;padding:40px;color:#888;font-size:14px;}
+.niche-hub-header{text-align:center;padding:20px 0 28px;}
+.niche-hub-title{font-size:32px;font-weight:900;color:#FFF;line-height:1.1;}
+.niche-hub-sub{font-size:28px;font-weight:900;color:#F5C800;margin-bottom:10px;}
+.niche-hub-desc{font-size:13px;color:#888;max-width:480px;margin:0 auto;line-height:1.6;}
+.niche-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;}
+.niche-card{background:#222;border:1px solid #333;border-radius:14px;padding:20px 16px;cursor:pointer;transition:all .2s;text-align:center;}
+.niche-card:hover{border-color:#F5C800;transform:translateY(-2px);}
+.niche-icon{font-size:28px;margin-bottom:10px;}
+.niche-name{font-size:13px;font-weight:800;color:#FFF;margin-bottom:4px;}
+.niche-desc{font-size:11px;color:#888;line-height:1.4;}
+.niche-detail-header{margin-bottom:24px;}
+.back-btn{background:transparent;border:1px solid #333;color:#888;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;margin-bottom:14px;}
+.back-btn:hover{border-color:#F5C800;color:#F5C800;}
+.niche-detail-title{font-size:24px;font-weight:900;color:#F5C800;margin-bottom:10px;}
+.niche-progress-row{display:flex;align-items:center;gap:14px;font-size:12px;color:#888;}
+.niche-prog-bar-wrap{flex:1;height:6px;background:#333;border-radius:50px;overflow:hidden;}
+.niche-prog-bar{height:100%;background:#F5C800;border-radius:50px;transition:width .4s;}
+.resource-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.res-card{background:#222;border:1px solid #333;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;}
+.res-card.res-done{opacity:.65;border-color:rgba(0,200,100,.25);background:rgba(0,200,100,.03);}
+.res-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.res-platform{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:4px;}
+.plat-hubspot{background:#ff7a59;color:#FFF;}.plat-coursera{background:#0056d3;color:#FFF;}.plat-google{background:#4285f4;color:#FFF;}
+.plat-youtube{background:#ff0000;color:#FFF;}.plat-canva{background:#7d2ae8;color:#FFF;}.plat-semrush{background:#ff642d;color:#FFF;}
+.plat-meta{background:#0082fb;color:#FFF;}.plat-free{background:#00c864;color:#000;}.plat-linkedin{background:#0a66c2;color:#FFF;}
+.res-duration{font-size:10px;color:#888;}
+.res-title{font-size:13px;font-weight:800;color:#FFF;line-height:1.3;}
+.res-desc{font-size:11px;color:#888;line-height:1.5;flex:1;}
+.res-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:4px;}
+.res-open{background:#F5C800;color:#000;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:800;text-decoration:none;}
+.res-complete{width:20px;height:20px;border-radius:50%;border:2px solid #333;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;transition:all .2s;flex-shrink:0;}
+.res-complete.done{background:#00c864;border-color:#00c864;color:#000;}
+.res-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;}
+.badge-free{background:rgba(0,200,100,.15);color:#00c864;border:1px solid rgba(0,200,100,.3);}
+.badge-cert{background:rgba(245,200,0,.15);color:#F5C800;border:1px solid rgba(245,200,0,.3);}
+.account-card{background:#222;border:1px solid #333;border-radius:14px;padding:24px;margin-bottom:16px;}
+.account-card h3{font-size:13px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;}
+.account-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px;}
+.account-row:last-child{border-bottom:none;}
+.account-row .al{color:#888;}
+.account-row .av{font-weight:600;}
+.av.active{color:#00c864;}
+.reset-box{background:#1A1A1A;border:1px solid #333;border-radius:16px;padding:36px 28px;width:100%;max-width:420px;}
+.reset-box h2{font-size:22px;font-weight:800;margin-bottom:6px;}
+.reset-box p{color:#888;font-size:13px;margin-bottom:24px;}
+.ob-locked{background:linear-gradient(135deg,#1a1200,#2a1800);border:1px solid rgba(245,200,0,.2);border-radius:16px;padding:56px 32px;text-align:center;max-width:500px;margin:0 auto;}
+.ob-locked .lock-icon{font-size:48px;margin-bottom:16px;}
+.ob-locked h2{font-size:20px;font-weight:800;color:#F5C800;margin-bottom:10px;}
+.ob-locked p{color:#888;font-size:14px;line-height:1.7;}
+.ob-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;}
+.ob-sidebar{background:#222;border:1px solid #333;border-radius:12px;overflow:hidden;}
+.ob-sidebar-header{padding:12px 16px;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#F5C800;border-bottom:1px solid #333;background:#1A1A1A;}
+.ob-vid-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .15s;}
+.ob-vid-item:hover{background:rgba(245,200,0,.05);}
+.ob-vid-item.ob-active{background:rgba(245,200,0,.1);border-left:3px solid #F5C800;}
+.ob-vid-item.ob-locked-item{cursor:not-allowed;opacity:.45;}
+.ob-vid-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+.ob-vid-title{font-size:12px;font-weight:600;color:#FFF;flex:1;line-height:1.3;}
+.ob-vid-status{font-size:10px;color:#888;margin-top:2px;}
+.ob-player-area{background:#222;border:1px solid #333;border-radius:12px;overflow:hidden;}
+.ob-player-header{padding:14px 18px;border-bottom:1px solid #333;}
+.ob-player-header h3{font-size:14px;font-weight:700;}
+.ob-player-header p{font-size:11px;color:#888;margin-top:3px;}
+.ob-player-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;}
+.ob-player-wrap iframe{width:100%;height:100%;border:none;}
+.ob-footer{padding:14px 18px;}
+.ob-prog-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.ob-prog-bar-wrap{flex:1;background:#333;border-radius:50px;height:8px;overflow:hidden;}
+.ob-prog-fill{height:100%;background:linear-gradient(90deg,#F5C800,#e6b800);border-radius:50px;transition:width .4s;}
+.ob-prog-pct{font-size:11px;color:#888;white-space:nowrap;}
+.ob-warning{background:rgba(204,0,0,.1);border:1px solid rgba(204,0,0,.3);border-radius:8px;padding:10px 14px;font-size:12px;color:#CC0000;margin-bottom:10px;display:none;}
+.ob-next-btn{background:#F5C800;color:#000;border:none;border-radius:8px;padding:9px 22px;font-size:13px;font-weight:700;cursor:pointer;display:none;}
+.quiz-wrap{max-width:620px;margin:0 auto;}
+.quiz-intro{text-align:center;margin-bottom:28px;}
+.quiz-intro h2{font-size:22px;font-weight:800;color:#F5C800;margin-bottom:8px;}
+.quiz-intro p{color:#888;font-size:14px;line-height:1.7;}
+.q-card{background:#222;border:1px solid #333;border-radius:12px;padding:22px;margin-bottom:14px;}
+.q-num{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:8px;}
+.q-text{font-size:14px;font-weight:700;margin-bottom:14px;line-height:1.5;}
+.q-opt{display:block;width:100%;padding:11px 14px;text-align:left;background:#1A1A1A;border:1px solid #333;border-radius:8px;color:#FFF;cursor:pointer;font-size:13px;margin-bottom:8px;transition:all .15s;}
+.q-opt:hover{border-color:#F5C800;}
+.q-opt.selected{border-color:#F5C800;background:rgba(245,200,0,.08);color:#F5C800;font-weight:600;}
+.q-opt.correct{border-color:#00c864;background:rgba(0,200,100,.08);color:#00c864;}
+.q-opt.wrong{border-color:#CC0000;background:rgba(204,0,0,.08);color:#CC0000;}
+.quiz-submit-btn{width:100%;padding:14px;background:#F5C800;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px;}
+.quiz-submit-btn:disabled{opacity:.45;cursor:not-allowed;}
+.quiz-result-box{background:#222;border:1px solid #333;border-radius:16px;padding:48px 32px;text-align:center;max-width:460px;margin:0 auto;}
+.quiz-result-box .ri{font-size:56px;margin-bottom:16px;}
+.quiz-result-box h2{font-size:24px;font-weight:800;margin-bottom:8px;}
+.quiz-score{font-size:52px;font-weight:900;margin:16px 0;}
+.quiz-result-box p{color:#888;font-size:14px;margin-bottom:20px;line-height:1.7;}
+.quiz-retry-btn{background:transparent;border:1px solid #F5C800;color:#F5C800;padding:10px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;}
+
+/* REVIEW REMINDER BANNER */
+.review-banner{display:none;background:linear-gradient(135deg,#1a0e00,#2a1800);border:2px solid #F5C800;border-radius:14px;padding:20px 22px;margin-bottom:22px;}
+.review-banner-inner{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.review-banner-icon{font-size:32px;flex-shrink:0;}
+.review-banner-body{flex:1;min-width:0;}
+.review-banner-title{font-size:14px;font-weight:800;color:#F5C800;margin-bottom:4px;}
+.review-banner-msg{font-size:13px;color:rgba(255,255,255,.8);line-height:1.5;}
+.review-banner-btn{background:#F5C800;color:#000;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.review-banner-btn:hover{opacity:.9;}
+
+/* ANNOUNCEMENT POPUP */
+.announce-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;}
+.announce-box{background:#1A1A1A;border:2px solid #F5C800;border-radius:18px;padding:32px 28px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;}
+.announce-badge{display:inline-block;background:#F5C800;color:#000;font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;padding:4px 12px;border-radius:50px;margin-bottom:14px;}
+.announce-box h2{font-size:20px;font-weight:800;margin-bottom:16px;color:#FFF;}
+.announce-msg{font-size:14px;color:rgba(255,255,255,.85);line-height:1.8;white-space:pre-line;margin-bottom:24px;}
+.announce-date{font-size:11px;color:#888;margin-bottom:16px;}
+.announce-dismiss{width:100%;padding:12px;background:#F5C800;color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;}
+
+@media(max-width:768px){.modules-layout{grid-template-columns:1fr}.modules-sidebar{max-height:380px}.dash-grid{grid-template-columns:1fr}.ob-layout{grid-template-columns:1fr}}
+@media(max-width:600px){.portal-nav{padding:0 14px}.tab-content{padding:16px}.dash-welcome{flex-direction:column}}
+/* ===== MOBILE RESPONSIVE ===== */
+@media(max-width:640px){
+  .portal-nav{padding:0 14px;height:52px;}
+  .nav-brand{font-size:12px;}
+  .portal-tabs{padding:0 10px;gap:0;}
+  .tab-btn{padding:10px 10px;font-size:11px;}
+  .tab-content{padding:14px;}
+  .dash-welcome{flex-direction:column;gap:10px;padding:18px;}
+  .dash-welcome h2{font-size:18px;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .dash-grid{grid-template-columns:1fr;}
+  .quick-grid{grid-template-columns:1fr 1fr;}
+  .modules-layout{grid-template-columns:1fr;}
+  .modules-sidebar{max-height:none;order:-1;}
+  #va-task-stats{grid-template-columns:1fr 1fr;}
+  .ob-layout{flex-direction:column;}
+  .ob-sidebar{width:100%;max-height:200px;}
+}
+/* ===== END MOBILE ===== */
+</style>
+</head>
+<body>
+
+<!-- ANNOUNCEMENT POPUP -->
+<div id="announce-overlay" class="announce-overlay" style="display:none;">
+  <div class="announce-box">
+    <div class="announce-badge">📣 New Announcement</div>
+    <div class="announce-date" id="announce-date"></div>
+    <div class="announce-msg" id="announce-msg"></div>
+    <button class="announce-dismiss" onclick="dismissAnnouncement()">Got it! ✓</button>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div id="screen-auth" class="screen active">
+  <div class="center-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="brand-tag">VA Newbies PH</div>
+        <h1>Member <span>Portal</span></h1>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login-btn" onclick="switchAuth('login')">Login</button>
+        <button class="auth-tab" id="tab-reg-btn" onclick="switchAuth('register')">Sign Up</button>
+      </div>
+      <div id="login-form">
+        <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@email.com"/></div>
+        <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••"/></div>
+        <button class="btn btn-yellow" onclick="doLogin()">Login to Portal</button>
+        <div class="err" id="login-err"></div>
+        <div style="text-align:center;margin-top:14px;">
+          <button onclick="doForgotPassword()" style="background:none;border:none;color:#888;font-size:12px;cursor:pointer;text-decoration:underline;">Forgot password?</button>
+        </div>
+        <div id="forgot-msg" style="display:none;text-align:center;margin-top:10px;font-size:12px;color:#00c864;"></div>
+      </div>
+      <div id="register-form" style="display:none">
+        <div class="field"><label>Full Name</label><input type="text" id="reg-name" placeholder="Ana Reyes"/></div>
+        <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="you@email.com"/></div>
+        <div class="field"><label>Password</label><input type="password" id="reg-pass" placeholder="Min 6 characters"/></div>
+        <div class="field">
+          <label>Membership Tier</label>
+          <select id="reg-tier" onchange="showTierInfo(this.value)">
+            <option value="starter">Starter — ₱799 / 3 months</option>
+            <option value="core">Core — ₱1,500 / 3 months</option>
+            <option value="pro">Pro — ₱2,500 / 6 months</option>
+          </select>
+        </div>
+        <div class="tier-info" id="tier-info"></div>
+        <button class="btn btn-yellow" onclick="doRegister()">Create Account</button>
+        <div class="err" id="reg-err"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESET PASSWORD -->
+<div id="screen-reset" class="screen">
+  <div class="center-wrap">
+    <div class="reset-box">
+      <h2>Set New Password</h2>
+      <p>Enter your new password below.</p>
+      <div class="field"><label>New Password</label><input type="password" id="new-pass" placeholder="Min 6 characters"/></div>
+      <div class="field"><label>Confirm Password</label><input type="password" id="confirm-pass" placeholder="Repeat password"/></div>
+      <button class="btn btn-yellow" onclick="doSetPassword()">Set Password</button>
+      <div class="err" id="reset-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PENDING -->
+<div id="screen-pending" class="screen">
+  <div class="center-wrap">
+    <div class="status-box">
+      <div class="status-icon">&#9203;</div>
+      <h2>Application Pending</h2>
+      <p>Your account is waiting for approval from Coach Di. You will receive access once approved.</p>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- TERMINATED -->
+<div id="screen-terminated" class="screen">
+  <div class="center-wrap">
+    <div class="status-box">
+      <div class="status-icon">&#128683;</div>
+      <h2>Access Terminated</h2>
+      <p>Your membership has been terminated. Contact Coach Di if you believe this is a mistake.</p>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPIRED -->
+<div id="screen-expired" class="screen">
+  <div class="center-wrap">
+    <div class="status-box">
+      <div class="status-icon">&#128197;</div>
+      <h2>Membership Expired</h2>
+      <p>Your membership period has ended. DM Coach Di to renew your access!</p>
+      <a href="mailto:hello@donebydi.com" style="display:inline-block;margin-top:16px;background:#F5C800;color:#000;padding:12px 24px;border-radius:10px;font-weight:700;text-decoration:none;font-size:14px;">Email Coach Di</a>
+      <br/><button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- PORTAL -->
+<div id="screen-portal" class="screen">
+  <nav class="portal-nav">
+    <div class="nav-brand">VA Newbies PH</div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <span style="font-size:13px;color:#888;" id="nav-user-name"></span>
+      <button class="nav-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </nav>
+  <div class="portal-tabs">
+    <button class="tab-btn active" onclick="openTab(this,'home')">Dashboard</button>
+    <button class="tab-btn" onclick="openTab(this,'onboarding')">🎬 Onboarding</button>
+    <button class="tab-btn" onclick="openTab(this,'paired-clients')">🔗 Paired Clients</button>
+    <button class="tab-btn" onclick="openTab(this,'va-tasks')">✅ Tasks</button>
+    <button class="tab-btn" onclick="openTab(this,'modules')">Learning Library</button>
+    <button class="tab-btn" onclick="openTab(this,'materials')">📎 Materials</button>
+    <button class="tab-btn" onclick="openTab(this,'checklist')">Checklist</button>
+    <button class="tab-btn" onclick="openTab(this,'jobs')">Job Board</button>
+    <button class="tab-btn" onclick="openTab(this,'resources')">Resources</button>
+    <button class="tab-btn" onclick="openTab(this,'account')">My Account</button>
+    <button class="tab-btn" onclick="openTab(this,'portfolio')">My Portfolio</button>
+    <button class="tab-btn" id="msg-tab-btn" onclick="openTab(this,'messages')">Messages <span id="msg-badge" style="display:none;background:#CC0000;color:#fff;padding:1px 7px;border-radius:50px;font-size:10px;margin-left:4px;">0</span></button>
+  </div>
+
+  <div id="tab-home" class="tab-content active">
+    <!-- REVIEW REMINDER BANNER — shown when pairing is pending_review and feedback not yet submitted -->
+    <div class="review-banner" id="review-reminder-banner">
+      <div class="review-banner-inner">
+        <div class="review-banner-icon">⏳</div>
+        <div class="review-banner-body">
+          <div class="review-banner-title">Your internship is complete — time to submit your feedback!</div>
+          <div class="review-banner-msg">Your 3-week pairing has ended. Coach Di needs your honest feedback before your next match. It only takes 2 minutes.</div>
+        </div>
+        <button class="review-banner-btn" onclick="goToFeedbackLink()">Submit Feedback →</button>
+      </div>
+    </div>
+    <div class="dash-welcome">
+      <div>
+        <h2>Welcome back, <span id="welcome-name">VA!</span></h2>
+        <p>You are on your way to building a successful VA career.<br/>Stay consistent — every module you complete gets you closer to your first client.</p>
+      </div>
+      <span class="tier-badge tier-starter" id="tier-badge">Starter</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="s-label">Membership</div><div class="s-val">Active</div><div class="s-sub">In good standing</div></div>
+      <div class="stat-card"><div class="s-label">Access Until</div><div class="s-val" id="home-expiry" style="font-size:15px">--</div><div class="s-sub" id="home-days">-- days remaining</div></div>
+      <div class="stat-card green-card"><div class="s-label">Videos Completed</div><div class="s-val" id="home-completed">0</div><div class="s-sub">of Start Here videos</div></div>
+      <div class="stat-card red-card"><div class="s-label">Open Jobs</div><div class="s-val" id="home-jobs">--</div><div class="s-sub">available now</div></div>
+    </div>
+    <div class="progress-wrap">
+      <h3>Start Here Progress</h3>
+      <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
+      <div class="prog-label"><span id="prog-text">0 of 5 completed</span><span id="prog-pct">0%</span></div>
+    </div>
+    <div id="dash-paired-notice" style="display:none;background:linear-gradient(135deg,#1a1200,#2a1800);border:1px solid rgba(245,200,0,.3);border-radius:14px;padding:20px;margin-bottom:22px;">
+      <div style="font-size:13px;font-weight:800;color:#F5C800;margin-bottom:6px;">🔗 You've been client-paired!</div>
+      <div style="font-size:13px;color:#888;line-height:1.6;">Your Onboarding playlist is now unlocked. Go to the <strong style="color:#FFF;">🎬 Onboarding</strong> tab to get started.</div>
+    </div>
+    <div class="dash-grid">
+      <div class="info-card">
+        <h3>Membership Info</h3>
+        <div class="info-row"><span class="i-label">Tier</span><span class="i-val" id="d-tier">--</span></div>
+        <div class="info-row"><span class="i-label">Status</span><span class="i-val active" id="d-status">Active</span></div>
+        <div class="info-row"><span class="i-label">Start Date</span><span class="i-val" id="d-start">--</span></div>
+        <div class="info-row"><span class="i-label">End Date</span><span class="i-val" id="d-end">--</span></div>
+        <div class="info-row"><span class="i-label">Payment</span><span class="i-val">GCash</span></div>
+      </div>
+      <div class="info-card">
+        <h3>Program Info</h3>
+        <div class="info-row"><span class="i-label">Coaching</span><span class="i-val">Group — Weekly</span></div>
+        <div class="info-row"><span class="i-label">Client Matching</span><span class="i-val">Core &amp; Pro only</span></div>
+        <div class="info-row"><span class="i-label">Internship</span><span class="i-val">3 Weeks</span></div>
+        <div class="info-row"><span class="i-label">Certificate</span><span class="i-val">Pro Tier only</span></div>
+        <div class="info-row"><span class="i-label">Community</span><span class="i-val active">Active</span></div>
+      </div>
+    </div>
+    <div class="notice-card">
+      <h3>Important Reminders</h3>
+      <div class="notice-item"><div class="notice-dot"></div><div>All client information is strictly confidential — emails, passwords, documents and operations must not be shared with anyone.</div></div>
+      <div class="notice-item"><div class="notice-dot"></div><div>No payment is required between you and your host client. Any attempt to collect fees will result in removal from the program.</div></div>
+      <div class="notice-item"><div class="notice-dot"></div><div>After your 3-week internship, you must submit an honest feedback form before being matched with another client.</div></div>
+      <div class="notice-item"><div class="notice-dot"></div><div>No rant posts or social media shaming. Violations result in permanent removal from VA Newbies PH.</div></div>
+    </div>
+    <div style="background:#222;border:1px solid #333;border-radius:14px;padding:20px;">
+      <div class="section-title">Quick Access</div>
+      <div class="quick-grid">
+        <div class="quick-card" onclick="openTab(document.querySelectorAll('.tab-btn')[2],'modules')"><div class="q-icon">&#9654;</div><div class="q-label">Start Learning</div><div class="q-sub">Watch your modules</div></div>
+        <div class="quick-card" onclick="openTab(document.querySelectorAll('.tab-btn')[3],'checklist')"><div class="q-icon">&#9989;</div><div class="q-label">My Checklist</div><div class="q-sub">Track your progress</div></div>
+        <div class="quick-card" onclick="openTab(document.querySelectorAll('.tab-btn')[4],'jobs')"><div class="q-icon">&#128188;</div><div class="q-label">Job Board</div><div class="q-sub">Available clients</div></div>
+        <div class="quick-card" onclick="openTab(document.querySelectorAll('.tab-btn')[5],'resources')"><div class="q-icon">&#128193;</div><div class="q-label">Resources</div><div class="q-sub">Free courses</div></div>
+      </div>
+    </div>
+    <div style="background:#222;border:1px solid #333;border-radius:14px;padding:20px;margin-top:22px;">
+      <div class="section-title">⭐ What Our VAs Say</div>
+      <div id="va-testimonials-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">
+        <div style="color:#888;font-size:13px;padding:20px;text-align:center;">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-onboarding" class="tab-content">
+    <div id="ob-locked" class="ob-locked" style="display:none">
+      <div class="lock-icon">🔒</div>
+      <h2>Onboarding Playlist Locked</h2>
+      <p>Coach Di hasn't assigned your onboarding yet. Keep an eye on your dashboard for a notification when it's ready!</p>
+    </div>
+    <div id="ob-active" style="display:none">
+      <div class="section-title" style="margin-bottom:18px;">🎬 Onboarding Playlist</div>
+      <div class="ob-layout">
+        <div class="ob-sidebar">
+          <div class="ob-sidebar-header">Videos</div>
+          <div id="ob-vid-list"></div>
+        </div>
+        <div class="ob-player-area">
+          <div class="ob-player-header">
+            <h3 id="ob-player-title">Select a video</h3>
+            <p id="ob-player-sub"></p>
+          </div>
+          <div class="ob-player-wrap" id="ob-player-wrap">
+            <div id="ob-yt-player"></div>
+          </div>
+          <div class="ob-footer">
+            <div class="ob-warning" id="ob-warning">⚠️ Watch at least 90% of the video — skipping is tracked.</div>
+            <div class="ob-prog-row">
+              <div class="ob-prog-bar-wrap"><div class="ob-prog-fill" id="ob-prog-fill" style="width:0%"></div></div>
+              <span class="ob-prog-pct" id="ob-prog-pct">0%</span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px;">
+              <button class="ob-next-btn" id="ob-next-btn" onclick="obNextVideo()">Next Video →</button>
+              <button id="ob-manual-done-btn" onclick="obManualMarkDone()" style="background:transparent;border:1px solid #00c864;color:#00c864;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">✅ I've watched this — Mark as Done</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="ob-quiz" style="display:none">
+      <div class="quiz-wrap">
+        <div class="quiz-intro">
+          <div style="font-size:36px;margin-bottom:10px;">📝</div>
+          <h2>Onboarding Quiz</h2>
+          <p>You've completed all the videos. Answer all questions — you need <strong style="color:#F5C800;">70%</strong> to pass.</p>
+        </div>
+        <div id="ob-quiz-questions"></div>
+        <button class="quiz-submit-btn" id="ob-quiz-submit" onclick="obSubmitQuiz()" disabled>Submit Quiz</button>
+      </div>
+    </div>
+    <div id="ob-quiz-result" style="display:none">
+      <div class="quiz-result-box">
+        <div class="ri" id="ob-result-icon"></div>
+        <h2 id="ob-result-title"></h2>
+        <div class="quiz-score" id="ob-result-score"></div>
+        <p id="ob-result-msg"></p>
+        <button class="quiz-retry-btn" id="ob-retry-btn" style="display:none" onclick="obRetakeQuiz()">Retake Quiz</button>
+        <div id="ob-pass-badge" style="display:none;margin-top:16px;">
+          <span style="background:rgba(0,200,100,.15);color:#00c864;border:1px solid rgba(0,200,100,.3);padding:10px 24px;border-radius:50px;font-weight:800;font-size:14px;">✅ Onboarding Complete!</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-paired-clients" class="tab-content">
+    <div class="section-title" style="margin-bottom:18px;">🔗 Paired Clients</div>
+
+    <!-- CURRENT PAIRING -->
+    <div id="pc-current-wrap">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:12px;">Current pairing</div>
+      <div id="pc-current-content">
+        <div style="background:#1A1A1A;border:1px solid #333;border-radius:12px;padding:32px 20px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:10px;">⏳</div>
+          <div style="font-size:14px;font-weight:700;color:#FFF;margin-bottom:6px;">No active pairing yet</div>
+          <div style="font-size:12px;color:#888;line-height:1.6;max-width:300px;margin:0 auto;">Once Coach Di pairs you with a client, their details will appear here.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAST CLIENTS -->
+    <div style="margin-top:24px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:12px;">Past clients</div>
+      <div id="pc-past-content">
+        <div style="background:#1A1A1A;border:1px solid #333;border-radius:12px;padding:24px 20px;text-align:center;">
+          <div style="font-size:12px;color:#888;line-height:1.6;">No past clients yet. Your completed pairings will appear here.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-va-tasks" class="tab-content">
+    <div class="section-title" style="margin-bottom:18px;">✅ My Tasks</div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;" id="va-task-stats">
+      <div class="stat-card"><div class="s-label">Total</div><div class="s-val" id="va-total-tasks" style="font-size:20px;">0</div></div>
+      <div class="stat-card"><div class="s-label">Open</div><div class="s-val" id="va-open-tasks" style="font-size:20px;">0</div></div>
+      <div class="stat-card"><div class="s-label">Submitted</div><div class="s-val" id="va-submitted-tasks" style="font-size:20px;color:#00c864;">0</div></div>
+      <div class="stat-card red-card"><div class="s-label">Overdue</div><div class="s-val" id="va-overdue-tasks" style="font-size:20px;">0</div></div>
+    </div>
+
+    <div id="va-tasks-list">
+      <div style="background:#1A1A1A;border:1px solid #333;border-radius:12px;padding:32px 20px;text-align:center;">
+        <div style="font-size:12px;color:#888;">No tasks yet. Tasks assigned by your client will appear here.</div>
+      </div>
+    </div>
+
+    <!-- SUBMIT RESULT MODAL -->
+    <div id="va-submit-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:#1A1A1A;border:1px solid #333;border-radius:14px;padding:24px;max-width:480px;width:100%;">
+        <div style="font-size:15px;font-weight:700;color:#FFF;margin-bottom:16px;">Submit your result</div>
+        <div style="font-size:12px;color:#888;margin-bottom:8px;">Describe what you completed or paste a link:</div>
+        <textarea id="va-result-text" style="width:100%;background:#0D0D0D;border:1px solid #333;border-radius:8px;padding:12px;color:#FFF;font-size:13px;resize:vertical;min-height:100px;outline:none;font-family:inherit;margin-bottom:12px;" placeholder="e.g. Completed 3 Instagram posts. Link: docs.google.com/..."></textarea>
+        <div style="display:flex;gap:10px;">
+          <button onclick="vaSubmitResult()" style="flex:1;background:#F5C800;color:#000;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;">Submit Result</button>
+          <button onclick="document.getElementById('va-submit-modal').style.display='none';" style="background:transparent;border:1px solid #333;color:#888;border-radius:8px;padding:11px 18px;font-size:13px;cursor:pointer;">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-modules" class="tab-content">
+    <div id="modules-container"></div>
+  </div>
+
+  <div id="tab-materials" class="tab-content">
+    <div class="section-title">📎 Materials</div>
+    <p style="font-size:13px;color:#888;margin-bottom:20px;line-height:1.6;">Resources, Google Drive folders, and links shared by Coach Di.</p>
+    <div id="member-materials-list"><div class="no-data">Loading materials...</div></div>
+  </div>
+
+  <div id="tab-checklist" class="tab-content">
+    <div class="section-title">Onboarding Checklist</div>
+    <div class="checklist" id="checklist">
+      <div class="check-item" id="cl-impl-start" onclick="toggleCheck('cl-impl-start')"><div class="check-circle" id="cc-impl-start"></div><div class="check-text">Implement Start Here</div></div>
+      <div class="check-item" id="cl-impl-course" onclick="toggleCheck('cl-impl-course')"><div class="check-circle" id="cc-impl-course"></div><div class="check-text">Implement Course Module</div></div>
+      <div class="check-item" id="cl-2" onclick="toggleCheck('cl-2')"><div class="check-circle" id="cc-2"></div><div class="check-text">Join the VA Newbies PH Facebook Community</div></div>
+      <div class="check-item" id="cl-3" onclick="toggleCheck('cl-3')"><div class="check-circle" id="cc-3"></div><div class="check-text">Read the VA Guidelines and Client Guidelines</div></div>
+      <div class="check-item" id="cl-4" onclick="toggleCheck('cl-4')"><div class="check-circle" id="cc-4"></div><div class="check-text">Set up your professional email address</div></div>
+      <div class="check-item" id="cl-5" onclick="toggleCheck('cl-5')"><div class="check-circle" id="cc-5"></div><div class="check-text">Create or update your LinkedIn profile</div></div>
+      <div class="check-item" id="cl-6" onclick="toggleCheck('cl-6')"><div class="check-circle" id="cc-6"></div><div class="check-text">Set up your Canva free account</div></div>
+      <div class="check-item" id="cl-8" onclick="toggleCheck('cl-8')"><div class="check-circle" id="cc-8"></div><div class="check-text">Attend your first Group Coaching session</div></div>
+      <div class="check-item" id="cl-9" onclick="toggleCheck('cl-9')"><div class="check-circle" id="cc-9"></div><div class="check-text">Check the Job Board for available clients</div></div>
+      <div class="check-item" id="cl-10" onclick="toggleCheck('cl-10')"><div class="check-circle" id="cc-10"></div><div class="check-text">Complete your VA profile and skills list</div></div>
+    </div>
+    <div style="margin-top:20px;background:#222;border:1px solid #333;border-radius:12px;padding:16px;">
+      <div class="prog-bar-wrap"><div class="prog-bar" id="cl-prog-bar" style="width:0%"></div></div>
+      <div class="prog-label" style="margin-top:8px;"><span id="cl-prog-text">0 of 10 completed</span><span id="cl-prog-pct">0%</span></div>
+    </div>
+  </div>
+
+  <div id="tab-jobs" class="tab-content">
+    <div class="section-title">Job Board</div>
+    <div id="jobs-list"><div class="no-data">Loading jobs...</div></div>
+  </div>
+
+  <div id="tab-resources" class="tab-content">
+    <div id="niche-hub" class="niche-hub">
+      <div class="niche-hub-header">
+        <div class="niche-hub-title">Pick Your Niche.</div>
+        <div class="niche-hub-sub">Get your resources.</div>
+        <div class="niche-hub-desc">Free courses, tool tutorials, and curated guides for YOUR specific VA path — hand-picked by Coach Di.</div>
+      </div>
+      <div class="niche-grid">
+        <div class="niche-card" onclick="openNiche('social')"><div class="niche-icon">📱</div><div class="niche-name">Social Media Manager</div><div class="niche-desc">Content, scheduling, analytics, ads</div></div>
+        <div class="niche-card" onclick="openNiche('seo')"><div class="niche-icon">🔍</div><div class="niche-name">SEO + GEO</div><div class="niche-desc">Rankings, local SEO, AI search</div></div>
+        <div class="niche-card" onclick="openNiche('website')"><div class="niche-icon">🌐</div><div class="niche-name">Website Building</div><div class="niche-desc">WordPress, Duda, design basics</div></div>
+        <div class="niche-card" onclick="openNiche('ads')"><div class="niche-icon">📢</div><div class="niche-name">Ads</div><div class="niche-desc">Facebook, Google, paid campaigns</div></div>
+        <div class="niche-card" onclick="openNiche('ai')"><div class="niche-icon">🤖</div><div class="niche-name">AI</div><div class="niche-desc">ChatGPT, automation, AI tools</div></div>
+        <div class="niche-card" onclick="openNiche('exec')"><div class="niche-icon">💼</div><div class="niche-name">Executive Assistant</div><div class="niche-desc">Inbox, travel, strategy, calendar</div></div>
+        <div class="niche-card" onclick="openNiche('content')"><div class="niche-icon">✍️</div><div class="niche-name">Content Writing</div><div class="niche-desc">Copywriting, blogging, SEO writing</div></div>
+        <div class="niche-card" onclick="openNiche('book')"><div class="niche-icon">📚</div><div class="niche-name">Book Publishing</div><div class="niche-desc">Formatting, KDP, publishing workflow</div></div>
+        <div class="niche-card" onclick="openNiche('ecom')"><div class="niche-icon">🛒</div><div class="niche-name">Ecommerce</div><div class="niche-desc">Shopify, Amazon, product listings</div></div>
+        <div class="niche-card" onclick="openNiche('podcast')"><div class="niche-icon">🎙️</div><div class="niche-name">Podcast</div><div class="niche-desc">Editing, show notes, distribution</div></div>
+        <div class="niche-card" onclick="openNiche('digital')"><div class="niche-icon">📊</div><div class="niche-name">Digital Marketing</div><div class="niche-desc">Strategy, funnels, analytics</div></div>
+      </div>
+    </div>
+    <div id="niche-detail" style="display:none">
+      <div class="niche-detail-header">
+        <button class="back-btn" onclick="closeNiche()">← Back to Niches</button>
+        <div class="niche-detail-title" id="niche-detail-name"></div>
+        <div class="niche-progress-row"><span id="niche-prog-text">0 completed</span><div class="niche-prog-bar-wrap"><div class="niche-prog-bar" id="niche-prog-bar" style="width:0%"></div></div></div>
+      </div>
+      <div class="resource-grid" id="resource-grid"></div>
+    </div>
+  </div>
+
+  <div id="tab-account" class="tab-content">
+    <div class="section-title">My Account</div>
+    <div class="account-card">
+      <h3>Membership Details</h3>
+      <div class="account-row"><span class="al">Full Name</span><span class="av" id="acc-name">--</span></div>
+      <div class="account-row"><span class="al">Email</span><span class="av" id="acc-email">--</span></div>
+      <div class="account-row"><span class="al">Tier</span><span class="av" id="acc-tier">--</span></div>
+      <div class="account-row"><span class="al">Status</span><span class="av active" id="acc-status">Active</span></div>
+      <div class="account-row"><span class="al">Access Start</span><span class="av" id="acc-start">--</span></div>
+      <div class="account-row"><span class="al">Access End</span><span class="av" id="acc-end">--</span></div>
+    </div>
+    <div class="account-card">
+      <h3>Need Help?</h3>
+      <p style="font-size:13px;color:#888;line-height:1.7">For membership questions or coaching — contact Coach Di at <strong style="color:#FFF">hello@donebydi.com</strong> or DM on Facebook.</p>
+    </div>
+  </div>
+
+  <div id="tab-portfolio" class="tab-content">
+    <div class="section-title">My Portfolio</div>
+    <div class="account-card">
+      <h3>Submit Your Portfolio Link</h3>
+      <p style="font-size:13px;color:#888;margin-bottom:18px;line-height:1.6;">Share your portfolio so Coach Di can review your work and give you feedback.</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+        <label style="font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;">Portfolio URL *</label>
+        <input type="url" id="port-url" placeholder="https://drive.google.com/..." style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 14px;color:#FFF;font-size:14px;outline:none;width:100%;font-family:inherit;"/>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
+        <label style="font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;">Brief Description (optional)</label>
+        <textarea id="port-desc" placeholder="What skills does your portfolio showcase?" rows="3" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 14px;color:#FFF;font-size:14px;outline:none;width:100%;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+      <button onclick="submitPortfolio()" style="background:#F5C800;color:#000;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;">Submit Portfolio</button>
+      <div id="port-err" style="color:#ff6b6b;font-size:12px;margin-top:10px;display:none;"></div>
+    </div>
+    <div style="margin-top:24px;">
+      <div class="section-title">My Submissions</div>
+      <div id="port-list"><div class="no-data">No submissions yet.</div></div>
+    </div>
+  </div>
+
+  <div id="tab-messages" class="tab-content">
+    <div class="section-title">Messages</div>
+    <div style="margin-bottom:28px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#F5C800;margin-bottom:12px;">Announcements from Coach Di</div>
+      <div id="broadcasts-list"><div class="no-data">No announcements yet.</div></div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#F5C800;margin-bottom:12px;">Direct Messages</div>
+      <div id="dm-list" style="max-height:400px;overflow-y:auto;background:#222;border:1px solid #333;border-radius:12px;padding:16px;margin-bottom:14px;min-height:100px;">
+        <div class="no-data">No messages yet. Send a message to Coach Di!</div>
+      </div>
+      <div id="msg-img-preview" style="display:none;margin-bottom:8px;position:relative;display:inline-block;">
+        <img id="msg-img-thumb" style="max-height:80px;max-width:200px;border-radius:8px;border:1px solid #444;display:block;" />
+        <button onclick="clearMsgImage()" style="position:absolute;top:-8px;right:-8px;width:20px;height:20px;background:#CC0000;color:#fff;border:none;border-radius:50%;font-size:11px;font-weight:700;cursor:pointer;line-height:1;">✕</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="file" id="msg-img-input" accept="image/*" style="display:none;" onchange="handleMsgImageFile(this)" />
+        <button onclick="document.getElementById('msg-img-input').click()" title="Attach image" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#888;border-radius:10px;padding:11px 13px;font-size:16px;cursor:pointer;flex-shrink:0;transition:border-color .2s;" onmouseover="this.style.borderColor='#F5C800'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)'">📷</button>
+        <input type="text" id="msg-input" placeholder="Type a message or paste a screenshot..." style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 14px;color:#fff;font-size:14px;outline:none;font-family:inherit;" onkeydown="if(event.key==='Enter'&&!event.shiftKey)sendMessage()" onpaste="handleMsgPaste(event)"/>
+        <button onclick="sendMessage()" style="background:#F5C800;color:#000;border:none;border-radius:10px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+var SURL='https://mbcwgtrliiocqcgwbfnu.supabase.co';
+var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iY3dndHJsaWlvY3FjZ3diZm51Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NDQwMzMsImV4cCI6MjA5MTUyMDAzM30.bs3bm6PEK82hr2T9NPs6lQ6jlgolL6wE-TDblXDEMVE';
+var sb=supabase.createClient(SURL,SKEY);
+var currentVideoId='';
+var startHereIds=['N-UtIYl7DmI','zm3DyiN1rbI','Axds_9TAmBg','AgKbdZ60fd8','C7eDgBu3R3g'];
+var currentNiche=null;
+var currentMemberId=null;var currentMemberEmail=null;
+var obVideos=[];var obProgress={};var obCurrentIdx=0;
+var obYtReady=false;var obWatchInterval=null;var obWatchedSecs=0;
+var obDuration=1;var obQuizQuestions=[];var obAnswers={};var obAttempt=1;
+var WATCH_THRESHOLD=0.90;var PASS_THRESHOLD=0.70;
+var obIsPlaying=false;var obCurrentVideo=null;var obLastKnownTime=0;
+var pendingAnnouncementId=null;
+var currentPairingId=null;
+
+var CAT_ORDER=['start-here','social-media','course-modules','webinars','workshops','seo-geo','website-building','ads','ai','executive-assistant','content-writing','book-publishing','ecommerce','podcast','other'];
+var CAT_LABELS={'start-here':'Start Here','social-media':'Social Media','course-modules':'Course Modules','webinars':'Webinars','workshops':'Workshops','seo-geo':'SEO + GEO','website-building':'Website Building','ads':'Ads','ai':'AI','executive-assistant':'Executive Assistant','content-writing':'Content Writing','book-publishing':'Book Publishing','ecommerce':'Ecommerce','podcast':'Podcast','other':'Other'};
+var COMING_SOON=['seo-geo','website-building','ads','ai','executive-assistant','content-writing','book-publishing','ecommerce','podcast'];
+
+// ── TIER HELPERS ──
+var TIER_INFO={
+  starter:{label:'Starter',price:'₱799',months:3,desc:'Community access, Job Board, Courses, Group Coaching'},
+  core:{label:'Core',price:'₱1,500',months:3,desc:'Everything in Starter + 1-on-1 Coaching + Client Pairing'},
+  pro:{label:'Pro',price:'₱2,500',months:6,desc:'Everything in Core + Priority Matching + Certificate (6-month access)'}
+};
+function showTierInfo(val){
+  var box=document.getElementById('tier-info');
+  var t=TIER_INFO[val];
+  if(!t){box.style.display='none';return;}
+  box.innerHTML='<strong>'+t.label+' — '+t.price+'</strong><br>'+t.desc+'<br><span style="color:#aaa">Access duration: '+t.months+' months</span>';
+  box.style.display='block';
+}
+
+function getCatLabel(cat){return CAT_LABELS[cat]||cat.replace(/-/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});}
+function ytThumb(ytid){return 'https://img.youtube.com/vi/'+ytid+'/mqdefault.jpg';}
+function showScreen(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.getElementById('screen-'+id).classList.add('active');}
+function switchAuth(tab){document.getElementById('login-form').style.display=tab==='login'?'block':'none';document.getElementById('register-form').style.display=tab==='register'?'block':'none';document.getElementById('tab-login-btn').classList.toggle('active',tab==='login');document.getElementById('tab-reg-btn').classList.toggle('active',tab==='register');}
+function openTab(btn,id){document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');});if(btn)btn.classList.add('active');document.getElementById('tab-'+id).classList.add('active');if(id==='jobs')loadJobs();if(id==='resources'){document.getElementById('niche-hub').style.display='block';document.getElementById('niche-detail').style.display='none';}if(id==='portfolio')loadPortfolios();if(id==='messages')loadMessages();if(id==='modules')buildModulesLayout();if(id==='onboarding')loadOnboardingTab();if(id==='materials')loadMemberMaterials();}
+
+// ── ANNOUNCEMENT POPUP ──
+async function checkAnnouncements(userId){
+  var res=await sb.from('messages').select('*').eq('is_broadcast',true).order('created_at',{ascending:false}).limit(1);
+  if(!res.data||!res.data.length)return;
+  var latest=res.data[0];
+  var readKey='va_announce_read_'+userId;
+  var readIds=JSON.parse(localStorage.getItem(readKey)||'[]');
+  if(readIds.includes(latest.id))return;
+  pendingAnnouncementId=latest.id;
+  document.getElementById('announce-msg').textContent=latest.message;
+  document.getElementById('announce-date').textContent='Posted '+new Date(latest.created_at).toLocaleDateString('en-PH',{month:'long',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('announce-overlay').style.display='flex';
+}
+function dismissAnnouncement(){
+  if(!pendingAnnouncementId||!currentMemberId)return;
+  var readKey='va_announce_read_'+currentMemberId;
+  var readIds=JSON.parse(localStorage.getItem(readKey)||'[]');
+  if(!readIds.includes(pendingAnnouncementId))readIds.push(pendingAnnouncementId);
+  localStorage.setItem(readKey,JSON.stringify(readIds));
+  document.getElementById('announce-overlay').style.display='none';
+  pendingAnnouncementId=null;
+}
+
+// ── REVIEW REMINDER BANNER ──
+async function checkReviewReminder(memberId, authUserId) {
+  // Check if this member has a pairing in pending_review with no VA feedback yet
+  var pRes = await sb.from('pairings')
+    .select('id, status')
+    .eq('member_id', memberId)
+    .eq('status', 'pending_review')
+    .limit(1);
+
+  if (pRes.data && pRes.data.length > 0) {
+    currentPairingId = pRes.data[0].id;
+    var fbRes = await sb.from('va_feedback').select('id').eq('pairing_id', currentPairingId).limit(1);
+    if (!fbRes.data || fbRes.data.length === 0) {
+      var banner = document.getElementById('review-reminder-banner');
+      if (banner) banner.style.display = 'block';
+    }
+  }
+  // Mark any unread review_reminder notifications as read
+  if (authUserId) {
+    await sb.from('notifications').update({is_read: true})
+      .eq('user_id', authUserId)
+      .eq('type', 'review_reminder')
+      .eq('is_read', false);
+  }
+}
+
+function goToFeedbackLink() {
+  var BASE = 'https://donebydimarketing.github.io/va-newbies-portal';
+  if (currentPairingId) {
+    window.open(BASE + '/va-feedback.html?pid=' + currentPairingId, '_blank');
+  } else {
+    // Fallback: direct them to messages to get the link from Coach Di
+    openTab(document.getElementById('msg-tab-btn'), 'messages');
+  }
+}
+
+async function doLogin(){
+  var email=document.getElementById('login-email').value.trim();var pass=document.getElementById('login-pass').value;var err=document.getElementById('login-err');err.style.display='none';
+  if(!email||!pass){err.textContent='Please enter email and password.';err.style.display='block';return;}
+  var res=await sb.auth.signInWithPassword({email:email,password:pass});
+  if(res.error){err.textContent=res.error.message;err.style.display='block';return;}
+  await loadPortal();
+}
+
+async function doRegister(){
+  var name=document.getElementById('reg-name').value.trim();
+  var email=document.getElementById('reg-email').value.trim();
+  var pass=document.getElementById('reg-pass').value;
+  var tier=document.getElementById('reg-tier').value;
+  var err=document.getElementById('reg-err');err.style.display='none';
+  if(!name||!email||!pass){err.textContent='Please fill all fields.';err.style.display='block';return;}
+
+  // Block host clients
+  var clientCheck=await sb.from('clients').select('id').eq('email',email).maybeSingle();
+  if(clientCheck.data){err.textContent='This email is registered as a host client. Please use the host client login page instead.';err.style.display='block';return;}
+
+  var res=await sb.auth.signUp({email:email,password:pass,options:{data:{full_name:name,tier:tier}}});
+  if(res.error){err.textContent=res.error.message;err.style.display='block';return;}
+  if(res.data&&res.data.user){
+    var preCheck=await sb.from('signups').select('*').eq('email',email).eq('pre_approved',true).single();
+    if(preCheck.data){
+      var approvedTier=preCheck.data.tier||tier;var months=approvedTier==='pro'?6:3;
+      var start=new Date();var end=new Date();end.setMonth(end.getMonth()+months);
+      await sb.from('members').insert({id:res.data.user.id,full_name:name,email:email,status:'active',tier:approvedTier,access_start:start.toISOString().split('T')[0],access_end:end.toISOString().split('T')[0]});
+    } else {
+      await sb.from('members').insert({id:res.data.user.id,full_name:name,email:email,status:'pending',tier:tier});
+    }
+    showScreen('pending');
+  }
+}
+
+async function doLogout(){clearInterval(obWatchInterval);await sb.auth.signOut();showScreen('auth');}
+
+async function doForgotPassword(){
+  var email=document.getElementById('login-email').value.trim();
+  var err=document.getElementById('login-err');
+  var msg=document.getElementById('forgot-msg');
+  err.style.display='none';msg.style.display='none';
+  if(!email){err.textContent='Please enter your email first, then click Forgot Password.';err.style.display='block';return;}
+  var res=await sb.auth.resetPasswordForEmail(email,{redirectTo:'https://donebydimarketing.github.io/va-newbies-portal/'});
+  if(res.error){err.textContent=res.error.message;err.style.display='block';return;}
+  msg.textContent='Password reset email sent! Check your inbox and click the link.';msg.style.display='block';
+}
+
+sb.auth.onAuthStateChange(async function(event, session){
+  if(event==='PASSWORD_RECOVERY'){
+    showScreen('reset');
+  }
+  if(event==='SIGNED_IN' && window.location.hash.indexOf('type=recovery') === -1){
+    loadPortal();
+  }
+});
+
+async function doSetPassword(){
+  var np=document.getElementById('new-pass').value;var cp=document.getElementById('confirm-pass').value;var err=document.getElementById('reset-err');err.style.display='none';
+  if(np.length<6){err.textContent='Min 6 characters.';err.style.display='block';return;}
+  if(np!==cp){err.textContent='Passwords do not match.';err.style.display='block';return;}
+  var res=await sb.auth.updateUser({password:np});
+  if(res.error){err.textContent=res.error.message;err.style.display='block';return;}
+  alert('Password set! Please log in.');await sb.auth.signOut();showScreen('auth');
+}
+
+async function loadVaTestimonials() {
+  var grid = document.getElementById('va-testimonials-grid');
+  if (!grid) return;
+  var res = await sb.from('testimonials').select('*').eq('active', true).eq('type', 'va').order('created_at', {ascending: false});
+  var data = res.data || [];
+  if (!data.length) { grid.innerHTML = '<div style="color:#888;font-size:13px;padding:20px;text-align:center;grid-column:1/-1;">Testimonials coming soon!</div>'; return; }
+  grid.innerHTML = data.map(function(t) {
+    return '<div style="border-radius:10px;overflow:hidden;cursor:pointer;border:1px solid #333;" onclick="window.open(\''+t.image_url+'\',\'_blank\')">' +
+      '<img src="'+t.image_url+'" style="width:100%;display:block;object-fit:cover;" loading="lazy"/>' +
+      (t.caption ? '<div style="padding:8px 10px;font-size:11px;color:#888;background:#1A1A1A;">'+t.caption+'</div>' : '') +
+      '</div>';
+  }).join('');
+}
+
+
+async function loadPortal(){
+  var ud=await sb.auth.getUser();if(!ud.data||!ud.data.user){showScreen('auth');return;}
+  var user=ud.data.user;
+  var res=await sb.from('members').select('*').eq('id',user.id).single();
+  var member=res.data;
+  if(!member){showScreen('pending');return;}
+  if(member.status==='pending'){showScreen('pending');return;}
+  if(member.status==='terminated'){showScreen('terminated');return;}
+  if(member.access_end){var t=new Date();t.setHours(0,0,0,0);if(new Date(member.access_end)<t){showScreen('expired');return;}}
+  currentMemberId=member.id;currentMemberEmail=member.email||user.email;
+  populatePortal(member,user);showScreen('portal');
+  loadJobCount();loadCompletions();updateMsgBadge();loadChecklist();loadVaTestimonials();
+  // Check for unread announcements
+  checkAnnouncements(member.id);
+  // Check if pairing is pending_review and show feedback banner
+  checkReviewReminder(member.id, user.id);
+  if(member.pairing_status==='pending'){
+    document.getElementById('dash-paired-notice').innerHTML='<div style="font-weight:700;color:#F5C800;margin-bottom:4px;">🔔 You have a pairing request!</div><div style="font-size:13px;color:#888;line-height:1.6;">Coach Di has matched you with a client. Go to <strong style="color:#FFF;">Messages</strong> to Accept or Decline.</div>';
+    document.getElementById('dash-paired-notice').style.display='block';
+  } else if(member.client_paired||member.pairing_status==='accepted'||member.pairing_status==='pending_review'){
+    var clientName=member.pairing_client_name||'your client';
+    var statusMsg=member.pairing_status==='pending_review'?'Your internship with <strong style="color:#FFF;">'+clientName+'</strong> has ended. Check your <strong style="color:#FFF;">Messages</strong> for the feedback request.':'Your internship with <strong style="color:#FFF;">'+clientName+'</strong> is active. Check the <strong style="color:#FFF;">Onboarding</strong> tab to get started.';
+    document.getElementById('dash-paired-notice').innerHTML='<div style="font-weight:700;color:#4CAF50;margin-bottom:4px;">✅ Pairing Active</div><div style="font-size:13px;color:#888;line-height:1.6;">'+statusMsg+'</div>';
+    document.getElementById('dash-paired-notice').style.display='block';
+  }
+}
+
+function populatePortal(member,user){
+  var name=member.full_name||user.email;var fn=name.split(' ')[0];
+  document.getElementById('nav-user-name').textContent=fn;document.getElementById('welcome-name').textContent=fn+'!';
+  var tier=(member.tier||'starter').toUpperCase();
+  var badge=document.getElementById('tier-badge');badge.textContent=tier;badge.className='tier-badge tier-'+member.tier;
+  if(member.access_end){var exp=new Date(member.access_end);var t=new Date();t.setHours(0,0,0,0);var days=Math.ceil((exp-t)/86400000);document.getElementById('home-expiry').textContent=exp.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});document.getElementById('home-days').textContent=days+' days remaining';document.getElementById('d-end').textContent=exp.toLocaleDateString('en-PH');}
+  document.getElementById('d-tier').textContent=tier;document.getElementById('d-start').textContent=member.access_start?new Date(member.access_start).toLocaleDateString('en-PH'):'--';
+  document.getElementById('acc-name').textContent=member.full_name||'--';document.getElementById('acc-email').textContent=member.email||user.email;document.getElementById('acc-tier').textContent=tier;
+  document.getElementById('acc-start').textContent=member.access_start?new Date(member.access_start).toLocaleDateString('en-PH'):'--';document.getElementById('acc-end').textContent=member.access_end?new Date(member.access_end).toLocaleDateString('en-PH'):'--';
+}
+
+async function loadJobCount(){var res=await sb.from('jobs').select('id').eq('status','open');document.getElementById('home-jobs').textContent=res.data?res.data.length:0;}
+
+async function buildModulesLayout(){
+  var container=document.getElementById('modules-container');if(!container)return;
+  if(!document.getElementById('lib-sidebar-wrap')){
+    container.innerHTML='<div class="modules-layout"><div class="modules-player"><div class="now-playing-label">Now Playing</div><div class="video-wrap" id="main-video-wrap" style="min-height:200px;"><div id="lib-placeholder" style="position:absolute;inset:0;background:#111;display:flex;align-items:center;justify-content:center;color:#555;font-size:13px;">Select a video to play</div></div><div class="video-info-box"><div class="video-info-cat" id="playing-cat">—</div><div class="video-info-title" id="playing-title">Select a video from the sidebar</div><div class="video-info-desc" id="playing-desc">Choose a video from the Learning Library on the right.</div><button class="mark-btn" id="mark-btn" onclick="markComplete()" style="display:none;">Mark as Complete</button></div></div><div class="modules-sidebar" id="lib-sidebar-wrap"><div class="sidebar-header">Learning Library</div><div id="lib-cat-list"><div style="padding:20px;text-align:center;color:#888;font-size:13px;">Loading...</div></div></div></div>';
+  }
+  await loadVideosFromDB();
+}
+
+async function loadVideosFromDB(){
+  var catList=document.getElementById('lib-cat-list');if(!catList)return;
+  catList.innerHTML='<div style="padding:20px;text-align:center;color:#888;font-size:13px;">Loading videos...</div>';
+  var res=await sb.from('videos').select('*').eq('is_active',true).order('sort_order');
+  var videos=res.data||[];
+  var grouped={};
+  videos.forEach(function(v){var cat=v.category||'other';if(!grouped[cat])grouped[cat]=[];grouped[cat].push(v);});
+  if(grouped['start-here']&&grouped['start-here'].length){startHereIds=grouped['start-here'].map(function(v){return v.youtube_id;});}
+  if(!videos.length){catList.innerHTML='<div style="padding:20px;text-align:center;color:#888;font-size:13px;">No videos yet. Check back soon!</div>';return;}
+  var orderedKeys=[];
+  CAT_ORDER.forEach(function(cat){if(grouped[cat])orderedKeys.push(cat);});
+  Object.keys(grouped).forEach(function(cat){if(orderedKeys.indexOf(cat)===-1)orderedKeys.push(cat);});
+  var html='';
+  orderedKeys.forEach(function(cat){
+    var vids=grouped[cat];var isStart=cat==='start-here';var label=getCatLabel(cat);
+    html+='<div class="lib-cat-block'+(isStart?' cat-start':'')+'" id="libcat-'+cat+'"><div class="lib-cat-header" onclick="libToggleCat(\''+cat+'\')"><div class="lib-cat-left"><span class="lib-cat-name">'+label+'</span><span class="lib-cat-count">'+vids.length+'</span></div><span class="lib-cat-chevron">▼</span></div><div class="lib-cat-body">';
+    vids.forEach(function(v,i){
+      var ytid=v.youtube_id;var safeTitle=(v.title||'').replace(/"/g,'&quot;');var safeCat=label.replace(/"/g,'&quot;');var safeDesc=(v.description||'').replace(/"/g,'&quot;');
+      html+='<div class="lib-vid-row" id="lvr-'+ytid+'" onclick="libPlayVideo(\''+ytid+'\',\''+safeCat+'\',\''+safeTitle+'\',\''+safeDesc+'\')"><img class="lib-vid-thumb" src="'+ytThumb(ytid)+'" alt="'+safeTitle+'" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" /><div class="lib-vid-thumb-placeholder" style="display:none;">▶</div><div class="lib-vid-num" id="lvn-'+ytid+'">'+(i+1)+'</div><div class="lib-vid-info"><div class="lib-vid-title">'+v.title+'</div><div class="lib-vid-sub">'+label+'</div></div>'+(isStart?'<span class="lib-vid-check" id="lvc-'+ytid+'"></span>':'')+'</div>';
+    });
+    html+='</div></div>';
+  });
+  var shownComing=COMING_SOON.filter(function(cat){return!grouped[cat];});
+  if(shownComing.length){html+='<div class="lib-coming-soon-header">Coming Soon</div>';shownComing.forEach(function(cat){html+='<div class="lib-coming-soon-item"><span class="lib-cs-name">'+getCatLabel(cat)+'</span><span class="lib-cs-badge">Soon</span></div>';});}
+  catList.innerHTML=html;
+  var startBlock=document.getElementById('libcat-start-here');if(startBlock)startBlock.classList.add('open');
+  loadCompletions();
+}
+
+function libToggleCat(cat){var block=document.getElementById('libcat-'+cat);if(block)block.classList.toggle('open');}
+
+function libPlayVideo(ytid,cat,title,desc){
+  currentVideoId=ytid;
+  document.querySelectorAll('.lib-vid-row').forEach(function(r){r.classList.remove('active');});
+  var row=document.getElementById('lvr-'+ytid);if(row)row.classList.add('active');
+  var wrap=document.getElementById('main-video-wrap');
+  var ph=document.getElementById('lib-placeholder');if(ph)ph.style.display='none';
+  var existing=document.getElementById('main-video');if(existing)existing.remove();
+  var iframe=document.createElement('iframe');iframe.id='main-video';
+  iframe.src='https://www.youtube.com/embed/'+ytid+'?rel=0&autoplay=1';
+  iframe.allowFullscreen=true;iframe.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;border:0;';
+  wrap.appendChild(iframe);
+  var ci=document.getElementById('playing-cat');var ti=document.getElementById('playing-title');var di=document.getElementById('playing-desc');
+  if(ci)ci.textContent=cat;if(ti)ti.textContent=title;if(di)di.textContent=desc||'';
+  var isStart=startHereIds.includes(ytid);
+  var mb=document.getElementById('mark-btn');
+  if(mb){mb.style.display=isStart?'inline-block':'none';if(isStart){var done=getCompleted();mb.textContent=done.includes(ytid)?'Completed!':'Mark as Complete';mb.className=done.includes(ytid)?'mark-btn marked':'mark-btn';}}
+}
+
+function getCompleted(){return JSON.parse(localStorage.getItem('va_completed')||'[]');}
+function saveCompleted(arr){localStorage.setItem('va_completed',JSON.stringify(arr));}
+
+async function markComplete(){
+  if(!startHereIds.includes(currentVideoId))return;
+  var done=getCompleted();
+  if(!done.includes(currentVideoId)){done.push(currentVideoId);saveCompleted(done);}
+  if(currentMemberId){await sb.from('onboarding_tasks').upsert({user_id:currentMemberId,video_id:currentVideoId,completed:true,progress:100,completed_at:new Date().toISOString(),updated_at:new Date().toISOString()},{onConflict:'user_id,video_id'});}
+  var btn=document.getElementById('mark-btn');if(btn){btn.textContent='Completed!';btn.className='mark-btn marked';}
+  updateVideoChecks(done);updateProgress(done);
+}
+
+async function loadCompletions(){
+  var done=getCompleted();
+  if(currentMemberId){var res=await sb.from('onboarding_tasks').select('video_id').eq('user_id',currentMemberId).eq('completed',true);if(res.data&&res.data.length){res.data.forEach(function(r){if(!done.includes(r.video_id)){done.push(r.video_id);}});saveCompleted(done);}}
+  updateVideoChecks(done);updateProgress(done);
+}
+
+function updateVideoChecks(done){
+  startHereIds.forEach(function(id){
+    var row=document.getElementById('lvr-'+id);var num=document.getElementById('lvn-'+id);var chk=document.getElementById('lvc-'+id);
+    if(done.includes(id)){if(row)row.classList.add('completed');if(num){num.textContent='✓';num.style.background='#00c864';num.style.color='#000';}if(chk)chk.textContent='✓';}
+    else{if(row)row.classList.remove('completed');if(num&&num.textContent==='✓'){var idx=startHereIds.indexOf(id);if(idx>-1){num.textContent=idx+1;num.style.background='';num.style.color='';}}if(chk)chk.textContent='';}
+  });
+}
+function updateProgress(done){
+  var count=done.filter(function(d){return startHereIds.includes(d);}).length;var total=startHereIds.length;var pct=total>0?Math.round(count/total*100):0;
+  var pb=document.getElementById('prog-bar');var pt=document.getElementById('prog-text');var pp=document.getElementById('prog-pct');var hc=document.getElementById('home-completed');
+  if(pb)pb.style.width=pct+'%';if(pt)pt.textContent=count+' of '+total+' completed';if(pp)pp.textContent=pct+'%';if(hc)hc.textContent=count;
+}
+
+async function loadOnboardingTab(){
+  document.getElementById('ob-locked').style.display='none';document.getElementById('ob-active').style.display='none';document.getElementById('ob-quiz').style.display='none';document.getElementById('ob-quiz-result').style.display='none';
+  if(!currentMemberId)return;
+  var res=await sb.from('members').select('onboarding_assigned,onboarding_completed,client_paired,pairing_status').eq('id',currentMemberId).single();
+  var m=res.data;var isUnlocked=m&&(m.pairing_status==='accepted'||m.client_paired||m.onboarding_assigned);
+  if(!m||!isUnlocked){if(m&&m.pairing_status==='pending'){document.getElementById('ob-locked').querySelector('p').textContent='You have a pending pairing request! Go to the Messages tab and Accept it to unlock your onboarding.';}document.getElementById('ob-locked').style.display='block';return;}
+  var[{data:videos},{data:progress},{data:quizRes}]=await Promise.all([sb.from('onboarding_videos').select('*').order('position'),sb.from('onboarding_watch_progress').select('*').eq('member_id',currentMemberId),sb.from('onboarding_quiz_results').select('*').eq('member_id',currentMemberId).order('taken_at',{ascending:false}).limit(1)]);
+  obVideos=videos||[];obProgress={};(progress||[]).forEach(function(p){obProgress[p.video_id]=p;});
+  var allDone=obVideos.length>0&&obVideos.every(function(v){return obProgress[v.id]&&obProgress[v.id].completed;});
+  if(allDone){if(quizRes&&quizRes.length){obShowResult(quizRes[0]);}else{obShowQuiz();}return;}
+  document.getElementById('ob-active').style.display='block';obRenderSidebar();
+  var firstUncompleted=obVideos.findIndex(function(v){return!obProgress[v.id]||!obProgress[v.id].completed;});
+  obCurrentIdx=firstUncompleted>=0?firstUncompleted:0;obLoadVideo(obCurrentIdx);
+}
+function obRenderSidebar(){
+  var list=document.getElementById('ob-vid-list');
+  list.innerHTML=obVideos.map(function(v,i){
+    var wp=obProgress[v.id];var icon='⬜',status='Not started';
+    if(wp&&wp.completed){icon='✅';status='Completed';}else if(wp&&wp.skipped){icon='⏭️';status='Needs rewatch';}else if(wp&&wp.watch_seconds>0){var pct=Math.round((wp.watch_seconds/Math.max(wp.duration_seconds,1))*100);icon='⏳';status=pct+'% watched';}
+    var isLocked=i>0&&(!obProgress[obVideos[i-1].id]||!obProgress[obVideos[i-1].id].completed);
+    if(isLocked&&(!wp||!wp.completed)){icon='🔒';status='Finish previous first';}
+    var cls='ob-vid-item'+(i===obCurrentIdx?' ob-active':'')+(isLocked&&(!wp||!wp.completed)?' ob-locked-item':'');
+    return'<div class="'+cls+'" onclick="'+(isLocked&&(!wp||!wp.completed)?'':'obPlayAt('+i+')')+'"><div class="ob-vid-icon">'+icon+'</div><div><div class="ob-vid-title">'+v.title+'</div><div class="ob-vid-status">'+status+'</div></div></div>';
+  }).join('');
+}
+function obPlayAt(idx){obCurrentIdx=idx;obRenderSidebar();obLoadVideo(idx);}
+function obLoadVideo(idx){
+  var v=obVideos[idx];if(!v)return;
+  document.getElementById('ob-player-title').textContent=v.title;document.getElementById('ob-player-sub').textContent='Video '+(idx+1)+' of '+obVideos.length;
+  document.getElementById('ob-prog-fill').style.width='0%';document.getElementById('ob-prog-pct').textContent='0%';document.getElementById('ob-warning').style.display='none';document.getElementById('ob-next-btn').style.display='none';
+  var mdb=document.getElementById('ob-manual-done-btn');if(mdb){mdb.textContent='✅ I\'ve watched this — Mark as Done';mdb.style.background='transparent';mdb.style.color='#00c864';mdb.disabled=false;}
+  obWatchedSecs=obProgress[v.id]?obProgress[v.id].watch_seconds||0:0;obDuration=v.duration_seconds||300;obIsPlaying=false;clearInterval(obWatchInterval);
+  var wrap=document.getElementById('ob-player-wrap');var old=document.getElementById('ob-yt-iframe');if(old)old.remove();
+  var iframe=document.createElement('iframe');iframe.id='ob-yt-iframe';
+  iframe.src='https://www.youtube.com/embed/'+v.youtube_video_id+'?enablejsapi=1&rel=0&modestbranding=1&origin='+encodeURIComponent(location.origin);
+  iframe.allow='autoplay; encrypted-media';iframe.allowFullscreen=true;iframe.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;border:none;z-index:1;';
+  wrap.appendChild(iframe);obCurrentVideo=v;
+}
+window.addEventListener('message',function(e){
+  if(!e.data||typeof e.data!=='string')return;
+  try{var d=JSON.parse(e.data);if(d.event==='infoDelivery'&&d.info){if(typeof d.info.playerState!=='undefined'){var state=d.info.playerState;if(state===1){if(!obIsPlaying){obIsPlaying=true;clearInterval(obWatchInterval);obWatchInterval=setInterval(function(){if(!obIsPlaying||!obCurrentVideo)return;obWatchedSecs=Math.min(obWatchedSecs+1,obDuration);obUpdateProgress(obCurrentVideo);},1000);}}else if(state===2||state===0){obIsPlaying=false;clearInterval(obWatchInterval);if(state===0)obUpdateProgress(obCurrentVideo);}}if(typeof d.info.currentTime!=='undefined'){var ct=d.info.currentTime;if(ct-obLastKnownTime>5&&obLastKnownTime>0){document.getElementById('ob-warning').style.display='block';}obLastKnownTime=ct;}}}catch(err){}
+});
+function obUpdateProgress(v){
+  if(!v)return;var pct=Math.min(Math.round((obWatchedSecs/Math.max(obDuration,1))*100),100);
+  document.getElementById('ob-prog-fill').style.width=pct+'%';document.getElementById('ob-prog-pct').textContent=pct+'%';
+  if(pct>=90){obSaveProgress(v,true);document.getElementById('ob-next-btn').style.display='block';document.getElementById('ob-warning').style.display='none';if(!obProgress[v.id]||!obProgress[v.id].completed){obProgress[v.id]={completed:true,watch_seconds:Math.round(obWatchedSecs),duration_seconds:obDuration};obRenderSidebar();}}
+  else if(Math.round(obWatchedSecs)%30===0&&obWatchedSecs>0){obSaveProgress(v,false);}
+}
+async function obSaveProgress(v,completed){
+  if(!currentMemberId)return;var pct=obWatchedSecs/Math.max(obDuration,1);
+  await sb.from('onboarding_watch_progress').upsert({member_id:currentMemberId,video_id:v.id,watch_seconds:Math.round(obWatchedSecs),duration_seconds:Math.round(obDuration),completed:completed&&pct>=WATCH_THRESHOLD,skipped:false,last_updated:new Date().toISOString()},{onConflict:'member_id,video_id'});
+}
+async function obManualMarkDone(){
+  var v=obCurrentVideo;if(!v)return;
+  var btn=document.getElementById('ob-manual-done-btn');
+  if(btn){btn.textContent='✅ Marked as Done!';btn.style.background='#00c864';btn.style.color='#000';btn.disabled=true;}
+  document.getElementById('ob-prog-fill').style.width='100%';document.getElementById('ob-prog-pct').textContent='100%';
+  obProgress[v.id]={completed:true,watch_seconds:v.duration_seconds||300,duration_seconds:v.duration_seconds||300};
+  await obSaveProgress(v,true);obRenderSidebar();document.getElementById('ob-next-btn').style.display='block';
+}
+async function obNextVideo(){
+  clearInterval(obWatchInterval);
+  if(obCurrentIdx<obVideos.length-1){obCurrentIdx++;obRenderSidebar();obLoadVideo(obCurrentIdx);}
+  else{var[{data:progress}]=await Promise.all([sb.from('onboarding_watch_progress').select('*').eq('member_id',currentMemberId)]);obProgress={};(progress||[]).forEach(function(p){obProgress[p.video_id]=p;});var allDone=obVideos.every(function(v){return obProgress[v.id]&&obProgress[v.id].completed;});if(allDone){document.getElementById('ob-active').style.display='none';obShowQuiz();}}
+}
+async function obShowQuiz(){
+  document.getElementById('ob-quiz').style.display='block';var res=await sb.from('onboarding_quiz_questions').select('*').order('position');obQuizQuestions=res.data||[];obAnswers={};
+  var prev=await sb.from('onboarding_quiz_results').select('attempt').eq('member_id',currentMemberId).order('attempt',{ascending:false}).limit(1);
+  obAttempt=prev.data&&prev.data.length?prev.data[0].attempt+1:1;
+  var wrap=document.getElementById('ob-quiz-questions');
+  wrap.innerHTML=obQuizQuestions.map(function(q,qi){return'<div class="q-card"><div class="q-num">Question '+q.position+'</div><div class="q-text">'+q.question+'</div>'+['a','b','c','d'].map(function(opt){return'<button class="q-opt" id="qopt-'+qi+'-'+opt+'" onclick="obSelectOpt('+qi+',\''+opt+'\',\''+q.id+'\')">'+opt.toUpperCase()+'. '+q['option_'+opt]+'</button>';}).join('')+'</div>';}).join('');
+  document.getElementById('ob-quiz-submit').disabled=true;
+}
+function obSelectOpt(qi,opt,qid){obAnswers[qid]=opt;['a','b','c','d'].forEach(function(o){var el=document.getElementById('qopt-'+qi+'-'+o);if(el)el.classList.remove('selected');});var sel=document.getElementById('qopt-'+qi+'-'+opt);if(sel)sel.classList.add('selected');if(Object.keys(obAnswers).length===obQuizQuestions.length)document.getElementById('ob-quiz-submit').disabled=false;}
+async function obSubmitQuiz(){
+  var correct=0;obQuizQuestions.forEach(function(q){if(obAnswers[q.id]===q.correct_answer)correct++;});var total=obQuizQuestions.length;var passed=correct/total>=PASS_THRESHOLD;
+  obQuizQuestions.forEach(function(q,qi){['a','b','c','d'].forEach(function(o){var btn=document.getElementById('qopt-'+qi+'-'+o);if(!btn)return;if(o===q.correct_answer)btn.classList.add('correct');else if(o===obAnswers[q.id])btn.classList.add('wrong');});});
+  document.getElementById('ob-quiz-submit').disabled=true;document.getElementById('ob-quiz-submit').textContent='Submitted ✓';
+  await sb.from('onboarding_quiz_results').insert([{member_id:currentMemberId,score:correct,total:total,passed:passed,answers:obAnswers,attempt:obAttempt}]);
+  if(passed){await sb.from('members').update({onboarding_completed:true,onboarding_completed_at:new Date().toISOString()}).eq('id',currentMemberId);}
+  setTimeout(function(){document.getElementById('ob-quiz').style.display='none';obShowResult({score:correct,total:total,passed:passed,attempt:obAttempt});},1500);
+}
+function obShowResult(result){
+  document.getElementById('ob-quiz-result').style.display='block';var score=Math.round((result.score/result.total)*100);
+  document.getElementById('ob-result-icon').textContent=result.passed?'🏆':'😤';document.getElementById('ob-result-title').textContent=result.passed?'You Passed!':'Not Quite Yet';document.getElementById('ob-result-title').style.color=result.passed?'#00c864':'#CC0000';document.getElementById('ob-result-score').textContent=score+'%';document.getElementById('ob-result-score').style.color=result.passed?'#00c864':'#CC0000';document.getElementById('ob-result-msg').textContent=result.passed?'You got '+result.score+'/'+result.total+' correct. You\'re officially onboarded!':'You got '+result.score+'/'+result.total+' correct. You need 70% to pass. Review the videos and try again.';document.getElementById('ob-retry-btn').style.display=result.passed?'none':'inline-block';document.getElementById('ob-pass-badge').style.display=result.passed?'block':'none';
+}
+async function obRetakeQuiz(){document.getElementById('ob-quiz-result').style.display='none';await obShowQuiz();}
+
+function loadChecklist(){
+  var checks=JSON.parse(localStorage.getItem('va_checklist')||'{}');
+  var allIds=['cl-impl-start','cl-impl-course','cl-2','cl-3','cl-4','cl-5','cl-6','cl-8','cl-9','cl-10'];var done=0;
+  allIds.forEach(function(id){if(checks[id]){var el=document.getElementById(id);var num=id.split('-').slice(1).join('-');var cc=document.getElementById('cc-'+num);if(el)el.classList.add('done');if(cc)cc.textContent='✓';done++;}});
+  updateChecklistProgress(done,allIds.length);
+}
+function toggleCheck(id){
+  var checks=JSON.parse(localStorage.getItem('va_checklist')||'{}');checks[id]=!checks[id];localStorage.setItem('va_checklist',JSON.stringify(checks));
+  var el=document.getElementById(id);var num=id.split('-').slice(1).join('-');var cc=document.getElementById('cc-'+num);
+  if(el)el.classList.toggle('done',checks[id]);if(cc)cc.textContent=checks[id]?'✓':'';
+  var allIds=['cl-impl-start','cl-impl-course','cl-2','cl-3','cl-4','cl-5','cl-6','cl-8','cl-9','cl-10'];
+  var done=allIds.filter(function(k){return checks[k];}).length;updateChecklistProgress(done,allIds.length);
+}
+function updateChecklistProgress(done,total){var pct=Math.round(done/total*100);var pb=document.getElementById('cl-prog-bar');var pt=document.getElementById('cl-prog-text');var pp=document.getElementById('cl-prog-pct');if(pb)pb.style.width=pct+'%';if(pt)pt.textContent=done+' of '+total+' completed';if(pp)pp.textContent=pct+'%';}
+
+async function loadJobs(){
+  var res=await sb.from('jobs').select('*').order('posted_at',{ascending:false});var list=document.getElementById('jobs-list');
+  if(!res.data||res.data.length===0){list.innerHTML='<div class="no-data">No job listings yet. Check back soon!</div>';return;}
+  var internships=res.data.filter(function(j){return j.job_category!=='hiring';});var hirings=res.data.filter(function(j){return j.job_category==='hiring';});
+  function renderJob(j,isHiring){var tasks=j.tasks?j.tasks.split(',').map(function(t){return'<li style="margin-bottom:4px;">'+t.trim()+'</li>';}).join(''):'';var postedDate=j.posted_at?new Date(j.posted_at).toLocaleDateString('en-PH',{month:'long',day:'numeric',year:'numeric'}):'';var catColor=isHiring?'#00c864':'var(--yellow)';var catLabel=isHiring?'💼 HIRING — External Opportunity':'🤝 INTERNSHIP — VA Newbies PH';return'<div class="job-card" style="border-left:3px solid '+catColor+';">'+'<div style="font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:'+catColor+';margin-bottom:10px;">'+catLabel+'</div>'+'<div class="job-top"><div><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:6px;">'+j.client_type+'</div><div class="job-type" style="font-size:20px;">'+(j.title||j.client_type+' — VA Opportunity')+'</div></div>'+'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;"><span class="job-badge badge-'+j.status+'">'+j.status.toUpperCase()+'</span>'+(j.rate?'<span style="font-size:13px;font-weight:800;color:'+catColor+';">'+j.rate+'</span>':'')+'</div></div>'+'<div style="border-top:1px solid var(--border);margin:12px 0;"></div>'+(j.description?'<div style="font-size:13px;color:rgba(255,255,255,.8);line-height:1.7;margin-bottom:14px;">'+j.description+'</div>':'')+(tasks?'<div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:'+catColor+';margin-bottom:8px;">Key Responsibilities</div><ul style="list-style:none;padding:0;margin:0;font-size:13px;color:rgba(255,255,255,.8);line-height:1.7;">'+tasks+'</ul></div>':'')+'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">'+'<span style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;color:#ccc;">⏱ '+(j.duration||'3 weeks')+'</span>'+'<span style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;color:#ccc;">👤 '+(j.slots||1)+' slot(s) available</span>'+(postedDate?'<span style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;color:#ccc;">📅 '+postedDate+'</span>':'')+'</div>'+(j.how_to_apply?'<div style="background:rgba(245,200,0,.06);border:1px solid rgba(245,200,0,.2);border-radius:10px;padding:14px;margin-bottom:14px;"><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--yellow);margin-bottom:6px;">How to Apply</div><div style="font-size:13px;color:rgba(255,255,255,.8);line-height:1.7;">'+j.how_to_apply+'</div></div>':'')+(j.status==='open'&&!isHiring?'<a href="mailto:hello@donebydi.com?subject=Job Application - '+j.client_type+'" class="apply-btn">Apply Now — Contact Coach Di</a>':(j.status!=='open'?'<div style="font-size:13px;color:var(--gray);font-style:italic;margin-top:8px;">This position is no longer available.</div>':''))+'</div>';}
+  var html='';
+  if(internships.length>0){html+='<div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:14px;display:flex;align-items:center;gap:10px;">🤝 VA Newbies PH Internships <span style="flex:1;height:1px;background:rgba(245,200,0,.2);display:block;"></span></div>';html+=internships.map(function(j){return renderJob(j,false);}).join('');}
+  if(hirings.length>0){html+='<div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#00c864;margin:'+(internships.length>0?'28px':'0')+'px 0 14px 0;display:flex;align-items:center;gap:10px;">💼 Hiring Opportunities <span style="flex:1;height:1px;background:rgba(0,200,100,.2);display:block;"></span></div>'+'<div style="background:rgba(0,200,100,.05);border:1px solid rgba(0,200,100,.15);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:rgba(255,255,255,.6);line-height:1.6;">⚠️ These are external job postings sourced from Facebook groups and online communities. VA Newbies PH is not the employer. Please do your due diligence before applying.</div>';html+=hirings.map(function(j){return renderJob(j,true);}).join('');}
+  list.innerHTML=html||'<div class="no-data">No job listings yet. Check back soon!</div>';
+}
+
+var NICHES={social:{name:"Social Media Manager",resources:[{platform:"HubSpot",plat_class:"plat-hubspot",duration:"6 hrs",title:"Social Media Marketing Certification",desc:"Complete strategy, content planning, paid social, ROI.",url:"https://academy.hubspot.com/courses/social-media",free:true,cert:true},{platform:"Meta",plat_class:"plat-meta",duration:"6 courses",title:"Meta Social Media Marketing Certificate",desc:"Official Meta training on FB/IG advertising and analytics.",url:"https://www.coursera.org/professional-certificates/facebook-social-media-marketing",free:false,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"2 hrs",title:"Instagram Marketing Strategy",desc:"End-to-end Instagram strategy from content to analytics.",url:"https://academy.hubspot.com/courses/instagram-marketing",free:true,cert:false},{platform:"Canva",plat_class:"plat-canva",duration:"Self-paced",title:"Canva Design School: Social Media",desc:"Eye-stopping graphics and video content for social.",url:"https://www.canva.com/designschool/",free:true,cert:false}]},seo:{name:"SEO + GEO",resources:[{platform:"SEMrush",plat_class:"plat-semrush",duration:"4 hrs",title:"SEO Fundamentals Course",desc:"Keywords, on-page SEO, link building basics with certificate.",url:"https://www.semrush.com/academy/courses/seo-fundamentals-course-with-mike-bryantsev/",free:true,cert:true},{platform:"Google",plat_class:"plat-google",duration:"40 hrs",title:"Digital Marketing Fundamentals",desc:"Comprehensive overview with Google certificate.",url:"https://learndigital.withgoogle.com/digitalgarage/course/digital-marketing",free:true,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"4 hrs",title:"SEO Certification Course",desc:"Keywords, on-page SEO, link building, technical SEO.",url:"https://academy.hubspot.com/courses/seo-training-course",free:true,cert:true}]},website:{name:"Website Building",resources:[{platform:"YouTube",plat_class:"plat-youtube",duration:"3 hrs",title:"WordPress for Beginners",desc:"Complete WordPress setup, themes, plugins, and pages.",url:"https://www.youtube.com/results?search_query=wordpress+for+beginners+full+course",free:true,cert:false},{platform:"Free",plat_class:"plat-free",duration:"Self-paced",title:"Duda Website Builder Training",desc:"Professional website builder training with certificate.",url:"https://university.duda.co/",free:true,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"2 hrs",title:"Website Optimization Course",desc:"Speed, UX, and conversion rate basics every VA needs.",url:"https://academy.hubspot.com/courses/website-optimization",free:true,cert:false}]},ads:{name:"Ads",resources:[{platform:"Google",plat_class:"plat-google",duration:"Self-paced",title:"Google Ads Certification",desc:"Search, Display, Shopping, and Video ads — all free.",url:"https://skillshop.withgoogle.com/",free:true,cert:true},{platform:"Meta",plat_class:"plat-meta",duration:"6 courses",title:"Meta Certified Digital Marketing Associate",desc:"Official Meta certification covering FB and IG ads.",url:"https://www.coursera.org/professional-certificates/facebook-social-media-marketing",free:false,cert:true},{platform:"SEMrush",plat_class:"plat-semrush",duration:"2 hrs",title:"PPC Advertising Toolkit Course",desc:"Pay-per-click fundamentals with real campaign examples.",url:"https://www.semrush.com/academy/courses/ppc-fundamentals-course-with-joel-bondorowsky/",free:true,cert:true}]},ai:{name:"AI",resources:[{platform:"Google",plat_class:"plat-google",duration:"Self-paced",title:"Google AI Essentials",desc:"Practical AI skills including prompt writing for work.",url:"https://grow.google/products/ai-essentials/",free:true,cert:true},{platform:"Coursera",plat_class:"plat-coursera",duration:"2 weeks",title:"Generative AI for Everyone",desc:"Andrew Ng's course on practical AI for non-developers.",url:"https://www.coursera.org/learn/generative-ai-for-everyone",free:true,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"2 hrs",title:"AI for Marketers",desc:"How AI transforms content creation and marketing.",url:"https://academy.hubspot.com/courses/ai-for-marketers",free:true,cert:true}]},exec:{name:"Executive Assistant",resources:[{platform:"Coursera",plat_class:"plat-coursera",duration:"3 months",title:"Google Project Management Certificate",desc:"End-to-end project management — highly valued by exec clients.",url:"https://www.coursera.org/professional-certificates/google-project-management",free:false,cert:true},{platform:"YouTube",plat_class:"plat-youtube",duration:"1 hr",title:"Notion for Beginners",desc:"The number 1 tool for executive assistants — full tutorial.",url:"https://www.youtube.com/results?search_query=notion+for+beginners+full+tutorial",free:true,cert:false},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"1 hr",title:"Email Marketing Certification",desc:"Manage client inboxes and build sequences like a pro.",url:"https://academy.hubspot.com/courses/email-marketing",free:true,cert:true}]},content:{name:"Content Writing",resources:[{platform:"HubSpot",plat_class:"plat-hubspot",duration:"6 hrs",title:"Content Marketing Certification",desc:"Strategy, storytelling, creation, measurement.",url:"https://academy.hubspot.com/courses/content-marketing",free:true,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"3 hrs",title:"Blogging Certification",desc:"Create, optimize, and promote blog content that ranks.",url:"https://academy.hubspot.com/courses/blogging-certification",free:true,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"4 hrs",title:"SEO Certification",desc:"Keywords, on-page SEO, link building, technical SEO.",url:"https://academy.hubspot.com/courses/seo-training-course",free:true,cert:true}]},book:{name:"Book Publishing",resources:[{platform:"YouTube",plat_class:"plat-youtube",duration:"1 hr",title:"KDP Publishing for Beginners",desc:"Kindle Direct Publishing full walkthrough.",url:"https://www.youtube.com/results?search_query=kdp+amazon+publishing+beginners+2024",free:true,cert:false},{platform:"Free",plat_class:"plat-free",duration:"Self-paced",title:"Reedsy Publishing School",desc:"Free courses on writing, editing, and publishing from pros.",url:"https://blog.reedsy.com/learning/",free:true,cert:true},{platform:"YouTube",plat_class:"plat-youtube",duration:"30 min",title:"Canva Book Cover Design",desc:"Design professional book covers using Canva templates.",url:"https://www.youtube.com/results?search_query=canva+book+cover+design+tutorial",free:true,cert:false}]},ecom:{name:"Ecommerce",resources:[{platform:"YouTube",plat_class:"plat-youtube",duration:"2 hrs",title:"Shopify Full Tutorial for VAs",desc:"Set up, manage, and optimize a Shopify store end-to-end.",url:"https://www.youtube.com/results?search_query=shopify+full+tutorial+virtual+assistant",free:true,cert:false},{platform:"Coursera",plat_class:"plat-coursera",duration:"5 courses",title:"Google Digital Marketing and E-commerce Certificate",desc:"Includes analytics, SEO, email, ads, and ecommerce.",url:"https://www.coursera.org/professional-certificates/google-digital-marketing-ecommerce",free:false,cert:true},{platform:"YouTube",plat_class:"plat-youtube",duration:"1 hr",title:"Amazon FBA for Beginners",desc:"Product research, listings, and seller central basics.",url:"https://www.youtube.com/results?search_query=amazon+fba+beginners+2024+tutorial",free:true,cert:false}]},podcast:{name:"Podcast",resources:[{platform:"YouTube",plat_class:"plat-youtube",duration:"1 hr",title:"How to Edit a Podcast with Audacity",desc:"Free audio editing for podcast VAs — full Audacity tutorial.",url:"https://www.youtube.com/results?search_query=audacity+podcast+editing+tutorial+beginners",free:true,cert:false},{platform:"Free",plat_class:"plat-free",duration:"Self-paced",title:"Descript Podcast Editing",desc:"AI-powered podcast editing tool — fastest VA workflow.",url:"https://www.descript.com/",free:true,cert:false},{platform:"YouTube",plat_class:"plat-youtube",duration:"45 min",title:"Podcast Show Notes Writing",desc:"How to write SEO-optimized show notes for podcast clients.",url:"https://www.youtube.com/results?search_query=how+to+write+podcast+show+notes",free:true,cert:false}]},digital:{name:"Digital Marketing",resources:[{platform:"Google",plat_class:"plat-google",duration:"40 hrs",title:"Google Digital Marketing Certificate",desc:"Comprehensive digital marketing with Google certification.",url:"https://learndigital.withgoogle.com/digitalgarage/course/digital-marketing",free:true,cert:true},{platform:"HubSpot",plat_class:"plat-hubspot",duration:"5 hrs",title:"Digital Marketing Certification",desc:"Full-funnel digital marketing strategy and execution.",url:"https://academy.hubspot.com/courses/digital-marketing",free:true,cert:true},{platform:"SEMrush",plat_class:"plat-semrush",duration:"3 hrs",title:"Digital Marketing Fundamentals",desc:"Channels, KPIs, and strategies every digital VA must know.",url:"https://www.semrush.com/academy/",free:true,cert:true}]}};
+function openNiche(key){currentNiche=key;var niche=NICHES[key];document.getElementById('niche-hub').style.display='none';document.getElementById('niche-detail').style.display='block';document.getElementById('niche-detail-name').textContent=niche.name;renderResources(key,niche.resources);}
+function closeNiche(){document.getElementById('niche-hub').style.display='block';document.getElementById('niche-detail').style.display='none';currentNiche=null;}
+function getNicheCompleted(key){return JSON.parse(localStorage.getItem('niche_done_'+key)||'[]');}
+function renderResources(key,resources){var done=getNicheCompleted(key);var count=done.length;var pct=resources.length>0?Math.round(count/resources.length*100):0;document.getElementById('niche-prog-text').textContent=count+' of '+resources.length+' completed';document.getElementById('niche-prog-bar').style.width=pct+'%';document.getElementById('resource-grid').innerHTML=resources.map(function(r,i){var isDone=done.includes(i);return'<div class="res-card'+(isDone?' res-done':'')+'"><div class="res-top"><span class="res-platform '+r.plat_class+'">'+r.platform+'</span><span class="res-duration">'+r.duration+'</span></div><div class="res-title">'+r.title+'</div><div class="res-desc">'+r.desc+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;">'+(r.free?'<span class="res-badge badge-free">Free</span>':'')+(r.cert?'<span class="res-badge badge-cert">Certificate</span>':'')+'</div><div class="res-bottom"><a href="'+r.url+'" target="_blank" class="res-open">Open</a><div class="res-complete'+(isDone?' done':'')+'" onclick="toggleNicheResource(\''+key+'\','+i+')">'+(isDone?'&#10003;':'')+'</div></div></div>';}).join('');}
+function toggleNicheResource(key,idx){var done=getNicheCompleted(key);var pos=done.indexOf(idx);if(pos===-1){done.push(idx);}else{done.splice(pos,1);}localStorage.setItem('niche_done_'+key,JSON.stringify(done));renderResources(key,NICHES[key].resources);}
+
+async function submitPortfolio(){
+  var url=document.getElementById('port-url').value.trim();var desc=document.getElementById('port-desc').value.trim();var err=document.getElementById('port-err');err.style.display='none';
+  if(!url){err.textContent='Please enter your portfolio URL.';err.style.display='block';return;}
+  if(!url.startsWith('http')){err.textContent='Please enter a valid URL starting with https://';err.style.display='block';return;}
+  var ud=await sb.auth.getUser();if(!ud.data||!ud.data.user)return;var user=ud.data.user;
+  var mem=await sb.from('members').select('full_name,email').eq('id',user.id).single();
+  var res=await sb.from('portfolios').insert({member_id:user.id,full_name:mem.data?mem.data.full_name:'',email:mem.data?mem.data.email:user.email,portfolio_url:url,description:desc,status:'pending'});
+  if(res.error){err.textContent='Error: '+res.error.message;err.style.display='block';return;}
+  document.getElementById('port-url').value='';document.getElementById('port-desc').value='';loadPortfolios();alert('Portfolio submitted! Coach Di will review it soon.');
+}
+async function loadPortfolios(){
+  var ud=await sb.auth.getUser();if(!ud.data||!ud.data.user)return;
+  var res=await sb.from('portfolios').select('*').eq('member_id',ud.data.user.id).order('submitted_at',{ascending:false});
+  var list=document.getElementById('port-list');if(!list)return;
+  if(!res.data||res.data.length===0){list.innerHTML='<div class="no-data">No submissions yet.</div>';return;}
+  list.innerHTML=res.data.map(function(p){var sc=p.status==='reviewed'?'var(--green)':'#F5C800';var sl=p.status==='reviewed'?'Reviewed':'Pending Review';return'<div class="account-card" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px;"><div><div style="font-size:11px;color:#888;margin-bottom:4px;">'+new Date(p.submitted_at).toLocaleDateString('en-PH',{month:'long',day:'numeric',year:'numeric'})+'</div><a href="'+p.portfolio_url+'" target="_blank" style="color:#F5C800;font-size:14px;font-weight:700;word-break:break-all;">'+p.portfolio_url+'</a></div><span style="border:1px solid '+sc+';color:'+sc+';padding:4px 12px;border-radius:50px;font-size:11px;font-weight:700;">'+sl+'</span></div>'+(p.description?'<div style="font-size:13px;color:#888;margin-bottom:10px;">'+p.description+'</div>':'')+(p.feedback?'<div style="background:rgba(0,200,100,.06);border:1px solid rgba(0,200,100,.25);border-radius:10px;padding:14px 16px;"><div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#00c864;margin-bottom:6px;">Coach Di Feedback</div><div style="font-size:13px;color:#fff;line-height:1.7;">'+p.feedback+'</div></div>':'<div style="font-size:12px;color:#888;font-style:italic;">Feedback will appear here once Coach Di reviews your portfolio.</div>')+'</div>';}).join('');}
+
+var msgSubscription=null;
+async function loadMessages(){
+  var ud=await sb.auth.getUser();if(!ud.data||!ud.data.user)return;var uid=ud.data.user.id;
+  var blist=document.getElementById('broadcasts-list');var dlist=document.getElementById('dm-list');
+  var test=await sb.from('messages').select('id').limit(1);
+  if(test.error){if(blist)blist.innerHTML='<div class="no-data" style="color:#F5C800;">Chat is being set up. Check back soon!</div>';if(dlist)dlist.innerHTML='<div class="no-data" style="color:#F5C800;">Chat is being set up. Check back soon!</div>';return;}
+  var bres=await sb.from('messages').select('*').eq('is_broadcast',true).order('created_at',{ascending:false});
+  if(blist){if(!bres.data||bres.data.length===0){blist.innerHTML='<div class="no-data">No announcements yet.</div>';}else{blist.innerHTML=bres.data.map(function(m){return'<div style="background:rgba(245,200,0,.06);border:1px solid rgba(245,200,0,.2);border-radius:10px;padding:14px 16px;margin-bottom:10px;"><div style="font-size:10px;color:#F5C800;font-weight:700;margin-bottom:6px;">COACH DI &nbsp;&middot;&nbsp;'+new Date(m.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})+'</div><div style="font-size:14px;line-height:1.6;">'+m.message+'</div></div>';}).join('');}}
+  var dres=await sb.from('messages').select('*').eq('is_broadcast',false).or('sender_id.eq.'+uid+',recipient_id.eq.'+uid).order('created_at',{ascending:true});
+  if(dlist){
+    if(!dres.data||dres.data.length===0){dlist.innerHTML='<div class="no-data">No messages yet. Send a message to Coach Di below!</div>';}
+    else{
+      var memRes=await sb.from('members').select('pairing_status').eq('id',uid).single();var pairingStatus=memRes.data?memRes.data.pairing_status:'none';
+      dlist.innerHTML=dres.data.map(function(m){var isMe=m.sender_id===uid;
+        var msgHtml='';
+        if(m.message)msgHtml+='<div style="font-size:13px;line-height:1.6;white-space:pre-line;">'+m.message+'</div>';
+        if(m.image_data)msgHtml+='<img src="'+m.image_data+'" style="max-width:220px;max-height:200px;border-radius:8px;margin-top:'+(m.message?'8px':'0')+';display:block;cursor:pointer;" onclick="window.open(this.src)" title="Click to open full size" />';
+        if(m.message_type==='pairing_request'&&!isMe&&pairingStatus==='pending'){msgHtml+='<div style="display:flex;gap:8px;margin-top:12px;"><button onclick="respondToPairing(\'accepted\',\''+m.pairing_id+'\')" style="flex:1;padding:9px;background:#00c864;color:#000;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">✅ Accept Pairing</button><button onclick="respondToPairing(\'declined\',\''+m.pairing_id+'\')" style="flex:1;padding:9px;background:#CC0000;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">❌ Decline</button></div>';}
+        if(m.message_type==='pairing_request'&&!isMe&&pairingStatus==='accepted'){msgHtml+='<div style="margin-top:10px;padding:8px 12px;background:rgba(0,200,100,.1);border-radius:8px;font-size:12px;color:#00c864;font-weight:700;">✅ You accepted this pairing</div>';}
+        if(m.message_type==='pairing_request'&&!isMe&&pairingStatus==='declined'){msgHtml+='<div style="margin-top:10px;padding:8px 12px;background:rgba(204,0,0,.1);border-radius:8px;font-size:12px;color:#CC0000;font-weight:700;">❌ You declined this pairing</div>';}
+        return'<div style="display:flex;justify-content:'+(isMe?'flex-end':'flex-start')+';margin-bottom:12px;"><div style="max-width:80%;background:'+(isMe?'#F5C800':'#333')+';color:'+(isMe?'#000':'#fff')+';border-radius:'+(isMe?'16px 16px 4px 16px':'16px 16px 16px 4px')+';padding:12px 16px;"><div style="font-size:11px;font-weight:700;margin-bottom:6px;opacity:.7;">'+(isMe?'You':'Coach Di')+'</div>'+msgHtml+'<div style="font-size:10px;opacity:.6;margin-top:6px;text-align:right;">'+new Date(m.created_at).toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})+'</div></div></div>';}).join('');
+      dlist.scrollTop=dlist.scrollHeight;
+    }
+  }
+  await sb.from('messages').update({is_read:true}).eq('recipient_id',uid).eq('is_read',false);updateMsgBadge();
+  if(msgSubscription){try{msgSubscription.unsubscribe();}catch(e){}}
+  msgSubscription=sb.channel('messages-'+uid).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},function(payload){var m=payload.new;if(m.is_broadcast||m.sender_id===uid||m.recipient_id===uid)loadMessages();}).subscribe();
+}
+async function respondToPairing(response,memberId){
+  var ud=await sb.auth.getUser();if(!ud.data||!ud.data.user)return;var uid=ud.data.user.id;
+  var mem=await sb.from('members').select('full_name,pairing_client_name,pairing_client_email').eq('id',uid).single();
+  var vaName=mem.data?mem.data.full_name:'VA';var clientName=mem.data?mem.data.pairing_client_name:'your client';
+  if(response==='accepted'){
+    var updA=await sb.from('members').update({pairing_status:'accepted',client_paired:true,pairing_accepted_at:new Date().toISOString()}).eq('id',uid);
+    if(updA.error){alert('Error saving response: '+updA.error.message);return;}
+    await sb.from('pairings').update({status:'agreed',updated_at:new Date().toISOString()}).eq('id',memberId);
+    await sb.from('messages').insert([{sender_id:uid,sender_name:vaName,sender_type:'va',recipient_id:null,message:'✅ '+vaName+' has ACCEPTED their pairing with '+clientName+'. Onboarding is now unlocked.',is_broadcast:false,is_read:false,message_type:'pairing_accepted',pairing_id:memberId}]);
+    alert('🎉 Pairing accepted! Your onboarding videos are now unlocked. Check the Onboarding tab!');
+  } else {
+    var updD=await sb.from('members').update({pairing_status:'declined',client_paired:false,pairing_declined_at:new Date().toISOString()}).eq('id',uid);
+    if(updD.error){alert('Error saving response: '+updD.error.message);return;}
+    await sb.from('pairings').update({status:'cancelled',updated_at:new Date().toISOString()}).eq('id',memberId);
+    await sb.from('messages').insert([{sender_id:uid,sender_name:vaName,sender_type:'va',recipient_id:null,message:'❌ '+vaName+' has DECLINED their pairing with '+clientName+'. Please follow up.',is_broadcast:false,is_read:false,message_type:'pairing_declined',pairing_id:memberId}]);
+    alert('Your response has been sent to Coach Di. She will follow up with you shortly.');
+  }
+  loadMessages();if(response==='accepted'){loadPortal();loadOnboardingTab();}
+}
+
+var pendingMsgImage=null;
+function handleMsgPaste(e){var items=(e.clipboardData||e.originalEvent&&e.originalEvent.clipboardData||{}).items||[];for(var i=0;i<items.length;i++){if(items[i].type.indexOf('image')!==-1){e.preventDefault();var file=items[i].getAsFile();readImageFile(file);return;}}}
+function handleMsgImageFile(input){if(!input.files||!input.files[0])return;readImageFile(input.files[0]);input.value='';}
+function readImageFile(file){if(!file)return;var reader=new FileReader();reader.onload=function(e){var img=new Image();img.onload=function(){var MAX=1200;var w=img.width,h=img.height;if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}var canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(img,0,0,w,h);pendingMsgImage=canvas.toDataURL('image/jpeg',0.82);var preview=document.getElementById('msg-img-preview');var thumb=document.getElementById('msg-img-thumb');if(preview)preview.style.display='inline-block';if(thumb)thumb.src=pendingMsgImage;};img.src=e.target.result;};reader.readAsDataURL(file);}
+function clearMsgImage(){pendingMsgImage=null;var preview=document.getElementById('msg-img-preview');var thumb=document.getElementById('msg-img-thumb');if(preview)preview.style.display='none';if(thumb)thumb.src='';}
+async function sendMessage(){
+  var input=document.getElementById('msg-input');var text=input.value.trim();
+  if(!text&&!pendingMsgImage)return;
+  var ud=await sb.auth.getUser();if(!ud.data||!ud.data.user)return;
+  var mem=await sb.from('members').select('full_name').eq('id',ud.data.user.id).single();
+  var name=mem.data?mem.data.full_name:ud.data.user.email;
+  await sb.from('messages').insert({sender_id:ud.data.user.id,sender_name:name,sender_type:'va',recipient_id:null,message:text||'',is_broadcast:false,is_read:false,image_data:pendingMsgImage||null});
+  input.value='';clearMsgImage();loadMessages();
+}
+async function updateMsgBadge(){
+  var ud=await sb.auth.getUser();if(!ud.data||!ud.data.user)return;
+  var res=await sb.from('messages').select('id').eq('recipient_id',ud.data.user.id).eq('is_read',false);
+  var count=res.data?res.data.length:0;var badge=document.getElementById('msg-badge');
+  if(badge){badge.style.display=count>0?'inline':'none';badge.textContent=count;}
+}
+
+var MAT_ICONS={'gdrive':'📁','link':'🔗','pdf':'📄','video':'🎬','other':'📎'};
+async function loadMemberMaterials(){
+  var el=document.getElementById('member-materials-list');if(!el)return;
+  el.innerHTML='<div class="no-data">Loading...</div>';
+  var res=await sb.from('materials').select('*').eq('is_active',true).order('sort_order');
+  if(res.error||!res.data||!res.data.length){el.innerHTML='<div class="no-data">No materials posted yet. Check back soon!</div>';return;}
+  el.innerHTML=res.data.map(function(m){return'<div class="account-card" style="margin-bottom:14px;"><div style="display:flex;align-items:flex-start;gap:16px;"><div style="font-size:32px;flex-shrink:0;">'+(MAT_ICONS[m.type]||'📎')+'</div><div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="font-size:15px;font-weight:800;color:#FFF;">'+m.title+'</span><span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:50px;background:rgba(245,200,0,.12);color:#F5C800;text-transform:uppercase;">'+m.type+'</span></div>'+(m.description?'<div style="font-size:13px;color:#888;margin-bottom:10px;line-height:1.6;">'+m.description+'</div>':'')+'<a href="'+m.url+'" target="_blank" style="display:inline-block;background:#F5C800;color:#000;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;">Open →</a></div></div></div>';}).join('');}
+
+// ============================================================
+// PAIRED CLIENTS TAB
+// ============================================================
+var vaCurrentPairingId = null;
+var vaSubmitTaskId = null;
+var vaChatChannel = null;
+
+async function loadPairedClients() {
+  var ud = await sb.auth.getUser();
+  if (!ud.data || !ud.data.user) return;
+  var uid = ud.data.user.id;
+
+  var mem = await sb.from('members').select('id, email, full_name').eq('id', uid).single();
+  if (!mem.data) return;
+  var memberId = mem.data.id;
+  var vaEmail = mem.data.email;
+
+  // Query by member_id first (correct), fall back to va_email for legacy pairings
+  var pRes = await sb.from('pairings').select('*').eq('member_id', memberId).in('status', ['pending','active','agreed','pending_review']).order('created_at', {ascending: false}).limit(1);
+  if (!pRes.data || !pRes.data.length) {
+    pRes = await sb.from('pairings').select('*').eq('va_email', vaEmail).in('status', ['pending','active','agreed','pending_review']).order('created_at', {ascending: false}).limit(1);
+  }
+  var current = pRes.data && pRes.data.length ? pRes.data[0] : null;
+
+  if (current) {
+    vaCurrentPairingId = current.id;
+    var cRes = await sb.from('clients').select('full_name, industry, niche').eq('id', current.client_id).single();
+    var client = cRes.data || {};
+    var firstName = (client.full_name || 'Client').split(' ')[0];
+    var dayNum = current.start_date ? Math.max(0, Math.min(21, Math.floor((Date.now() - new Date(current.start_date)) / 86400000))) : 0;
+
+    // Show Accept/Decline if pending
+    if (current.status === 'pending') {
+      document.getElementById('pc-current-content').innerHTML = `
+        <div style="background:#1A1A1A;border:1px solid rgba(245,200,0,.3);border-radius:12px;padding:20px 18px;text-align:center;">
+          <div style="font-size:28px;margin-bottom:12px;">🎉</div>
+          <div style="font-size:16px;font-weight:700;color:#FFF;margin-bottom:8px;">You have a pairing waiting!</div>
+          <div style="font-size:13px;color:#888;margin-bottom:4px;">Coach Di has matched you with:</div>
+          <div style="font-size:20px;font-weight:700;color:#F5C800;margin-bottom:6px;">${firstName}</div>
+          <div style="display:flex;gap:16px;justify-content:center;margin-bottom:20px;">
+            <div><div style="font-size:10px;color:#888;">Industry</div><div style="font-size:13px;color:#CCC;">${client.industry || 'Not specified'}</div></div>
+            <div><div style="font-size:10px;color:#888;">Niche</div><div style="font-size:13px;color:#CCC;">${client.niche || 'Not specified'}</div></div>
+            <div><div style="font-size:10px;color:#888;">Start date</div><div style="font-size:13px;color:#CCC;">${fmtD(current.start_date)}</div></div>
+            <div><div style="font-size:10px;color:#888;">End date</div><div style="font-size:13px;color:#CCC;">${fmtD(current.end_date)}</div></div>
+          </div>
+          <div style="background:rgba(255,200,0,.06);border:1px solid rgba(255,200,0,.15);border-radius:8px;padding:10px 12px;font-size:12px;color:#AAA;margin-bottom:18px;line-height:1.6;text-align:left;">
+            By accepting, you commit to completing the 3-week internship and submitting honest feedback at the end. No payment is involved. All work is done through the portal.
+          </div>
+          <div style="display:flex;gap:10px;justify-content:center;">
+            <button onclick="respondToPairingFromTab('accepted','${current.id}')" style="flex:1;max-width:160px;padding:12px;background:#00c864;color:#000;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">✅ Accept Pairing</button>
+            <button onclick="respondToPairingFromTab('declined','${current.id}')" style="flex:1;max-width:160px;padding:12px;background:#CC0000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">❌ Decline</button>
+          </div>
+        </div>`;
+      return; // Don't load chat yet
+    }
+
+    document.getElementById('pc-current-content').innerHTML = `
+      <div style="background:#1A1A1A;border:1px solid rgba(245,200,0,.2);border-radius:12px;padding:16px 18px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-size:16px;font-weight:700;color:#FFF;margin-bottom:3px;">${firstName}</div>
+            <div style="font-size:11px;color:#888;">Paired since ${fmtD(current.start_date)}</div>
+          </div>
+          <span style="font-size:10px;background:rgba(245,200,0,.1);color:#F5C800;padding:3px 10px;border-radius:99px;font-weight:500;">Day ${dayNum} of 21</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <div><div style="font-size:10px;color:#888;margin-bottom:2px;">Industry</div><div style="font-size:13px;font-weight:500;color:#CCC;">${client.industry || 'Not specified'}</div></div>
+          <div><div style="font-size:10px;color:#888;margin-bottom:2px;">Niche</div><div style="font-size:13px;font-weight:500;color:#CCC;">${client.niche || 'Not specified'}</div></div>
+          <div><div style="font-size:10px;color:#888;margin-bottom:2px;">End date</div><div style="font-size:13px;font-weight:500;color:#CCC;">${fmtD(current.end_date)}</div></div>
+        </div>
+        <div style="background:rgba(255,165,0,.06);border:1px solid rgba(255,165,0,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:#AAA;margin-bottom:14px;line-height:1.6;">
+          🔒 This chat is for task updates and quick check-ins only. Do not share passwords, login credentials, or sensitive files here. Use email for those.
+        </div>
+        <div style="background:#111;border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Group chat</div>
+          <div id="pc-chat-messages" style="min-height:80px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;max-height:260px;overflow-y:auto;"></div>
+          <div style="display:flex;gap:8px;">
+            <input id="pc-chat-input" style="flex:1;background:#1A1A1A;border:1px solid #333;border-radius:8px;padding:8px 12px;font-size:12px;color:#FFF;font-family:inherit;" placeholder="Type a message..." onkeydown="if(event.key==='Enter')vaSendChat()"/>
+            <button onclick="vaSendChat()" style="background:#F5C800;color:#000;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">Send</button>
+          </div>
+        </div>
+        <button onclick="openVaSubmitModal(null)" style="background:#F5C800;color:#000;border:none;border-radius:8px;padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;margin-right:8px;">Submit a result</button>
+      </div>`;
+
+    loadVaPairingChat(current.id, vaEmail);
+    loadVaTasks(vaEmail);
+  }
+
+  // Past pairings
+  var pastRes = await sb.from('pairings').select('*, clients(full_name, industry, niche)').eq('va_email', vaEmail).eq('status', 'completed').order('end_date', {ascending: false});
+  var past = pastRes.data || [];
+  if (past.length) {
+    document.getElementById('pc-past-content').innerHTML = past.map(function(p) {
+      var c = p.clients || {};
+      var fname = (c.full_name || 'Client').split(' ')[0];
+      return `<div style="background:#1A1A1A;border:1px solid #333;border-radius:12px;padding:14px 16px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:700;color:#FFF;">${fname}</div>
+          <span style="font-size:10px;background:#222;color:#888;padding:3px 8px;border-radius:99px;">Completed</span>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div><div style="font-size:10px;color:#888;">Industry</div><div style="font-size:12px;color:#CCC;">${c.industry || 'Not specified'}</div></div>
+          <div><div style="font-size:10px;color:#888;">Niche</div><div style="font-size:12px;color:#CCC;">${c.niche || 'Not specified'}</div></div>
+          <div><div style="font-size:10px;color:#888;">Period</div><div style="font-size:12px;color:#CCC;">${fmtD(p.start_date)} — ${fmtD(p.end_date)}</div></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+async function loadVaPairingChat(pairingId, vaEmail) {
+  var msgDiv = document.getElementById('pc-chat-messages');
+  if (!msgDiv) return;
+  var res = await sb.from('messages').select('*').eq('pairing_id', pairingId).order('created_at', {ascending: true});
+  var msgs = res.data || [];
+  if (msgs.length) {
+    msgDiv.innerHTML = msgs.map(function(m) { return vaRenderBubble(m, vaEmail); }).join('');
+  } else {
+    msgDiv.innerHTML = '<div style="text-align:center;font-size:12px;color:#888;padding:12px 0;">No messages yet. Say hello to your client!</div>';
+  }
+  msgDiv.scrollTop = msgDiv.scrollHeight;
+  if (vaChatChannel) sb.removeChannel(vaChatChannel);
+  vaChatChannel = sb.channel('va-chat:'+pairingId).on('postgres_changes', {event:'INSERT', schema:'public', table:'messages', filter:'pairing_id=eq.'+pairingId}, function(payload) {
+    var md = document.getElementById('pc-chat-messages');
+    if (!md) return;
+    var lk = md.querySelector('[data-no-msg]');
+    if (lk) lk.remove();
+    md.innerHTML += vaRenderBubble(payload.new, vaEmail);
+    md.scrollTop = md.scrollHeight;
+  }).subscribe();
+}
+
+function vaRenderBubble(m, vaEmail) {
+  var isAdmin = m.sender_role === 'admin';
+  var isMe = m.sender_email === vaEmail;
+  var cls = isAdmin ? 'admin' : isMe ? 'me' : 'them';
+  var styles = {
+    admin: 'background:rgba(255,255,255,.04);color:#888;font-size:11px;font-style:italic;align-self:center;text-align:center;border-radius:8px;padding:6px 10px;max-width:80%;',
+    me: 'background:#F5C800;color:#000;border-radius:10px 10px 2px 10px;align-self:flex-end;max-width:80%;padding:8px 12px;font-size:12px;',
+    them: 'background:#222;color:#FFF;border-radius:10px 10px 10px 2px;max-width:80%;padding:8px 12px;font-size:12px;'
+  };
+  var prefix = isAdmin ? 'Coach Di: ' : '';
+  return '<div style="'+styles[cls]+'">' + prefix + escV(m.message) + '</div>';
+}
+
+async function vaSendChat() {
+  var input = document.getElementById('pc-chat-input');
+  var msg = input && input.value.trim();
+  if (!msg || !vaCurrentPairingId) return;
+  input.value = '';
+  var ud = await sb.auth.getUser();
+  if (!ud.data || !ud.data.user) return;
+  var mem = await sb.from('members').select('email').eq('id', ud.data.user.id).single();
+  if (!mem.data) return;
+  await sb.from('messages').insert({ pairing_id: vaCurrentPairingId, sender_role: 'va', sender_email: mem.data.email, message: msg });
+}
+
+// ============================================================
+// VA TASKS TAB
+// ============================================================
+async function loadVaTasks(vaEmail) {
+  if (!vaEmail) {
+    var ud = await sb.auth.getUser();
+    if (!ud.data || !ud.data.user) return;
+    var mem = await sb.from('members').select('email').eq('id', ud.data.user.id).single();
+    if (!mem.data) return;
+    vaEmail = mem.data.email;
+  }
+
+  var pRes = await sb.from('pairings').select('id').eq('va_email', vaEmail).in('status', ['active','agreed','pending_review']);
+  var pairingIds = (pRes.data || []).map(function(p) { return p.id; });
+  if (!pairingIds.length) return;
+
+  var tRes = await sb.from('client_tasks').select('*').in('pairing_id', pairingIds).order('created_at', {ascending: false});
+  var tasks = tRes.data || [];
+
+  var today = new Date(); today.setHours(0,0,0,0);
+  var open = tasks.filter(function(t) { return t.status === 'open' || t.status === 'in_progress'; }).length;
+  var submitted = tasks.filter(function(t) { return t.status === 'submitted'; }).length;
+  var overdue = tasks.filter(function(t) { return t.deadline && new Date(t.deadline) < today && t.status !== 'completed'; }).length;
+
+  var totalEl = document.getElementById('va-total-tasks');
+  var openEl = document.getElementById('va-open-tasks');
+  var subEl = document.getElementById('va-submitted-tasks');
+  var ovEl = document.getElementById('va-overdue-tasks');
+  if (totalEl) totalEl.textContent = tasks.length;
+  if (openEl) openEl.textContent = open;
+  if (subEl) subEl.textContent = submitted;
+  if (ovEl) ovEl.textContent = overdue;
+
+  if (!tasks.length) return;
+
+  var listEl = document.getElementById('va-tasks-list');
+  if (!listEl) return;
+  listEl.innerHTML = tasks.map(function(t) {
+    var isOverdue = t.deadline && new Date(t.deadline) < today && t.status !== 'completed';
+    var badgeMap = { open: {cls:'rgba(245,200,0,.1)', color:'#F5C800', label:'Open'}, urgent: {cls:'rgba(204,0,0,.12)', color:'#CC0000', label:'Urgent'}, in_progress: {cls:'rgba(245,200,0,.1)', color:'#F5C800', label:'In progress'}, submitted: {cls:'rgba(0,200,100,.1)', color:'#00c864', label:'Submitted'}, completed: {cls:'rgba(255,255,255,.06)', color:'#888', label:'Completed'}, revision: {cls:'rgba(249,115,22,.1)', color:'#f97316', label:'Needs revision'} };
+    var b = t.priority === 'urgent' ? badgeMap.urgent : (badgeMap[t.status] || badgeMap.open);
+    var canSubmit = t.status === 'open' || t.status === 'urgent' || t.status === 'in_progress' || t.status === 'revision';
+    return '<div style="background:#1A1A1A;border:1px solid '+(isOverdue?'rgba(204,0,0,.3)':'#333')+';border-radius:12px;padding:14px 16px;margin-bottom:10px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px;flex-wrap:wrap;">' +
+      '<div style="font-size:14px;font-weight:600;color:#FFF;">'+escV(t.title)+'</div>' +
+      '<span style="font-size:10px;background:'+b.cls+';color:'+b.color+';padding:3px 9px;border-radius:99px;font-weight:500;flex-shrink:0;">'+b.label+'</span></div>' +
+      (t.description ? '<div style="font-size:12px;color:#888;margin-bottom:8px;line-height:1.5;">'+escV(t.description)+'</div>' : '') +
+      '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;">' +
+      (t.deadline ? '<div><div style="font-size:10px;color:#888;">Deadline</div><div style="font-size:12px;font-weight:500;color:'+(isOverdue?'#CC0000':'#FFF')+';">'+fmtD(t.deadline)+(isOverdue?' — OVERDUE':'')+'</div></div>' : '') +
+      '</div>' +
+      (t.status === 'submitted' ? '<div style="background:#111;border-radius:8px;padding:10px 12px;font-size:12px;color:#888;margin-bottom:10px;"><div style="font-size:10px;color:#F5C800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Your submitted result</div>'+escV(t.result_text||'')+'</div>' : '') +
+      (canSubmit ? '<button onclick="openVaSubmitModal(\''+t.id+'\')" style="background:#F5C800;color:#000;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;">Submit result</button>' : '') +
+      '</div>';
+  }).join('');
+}
+
+function openVaSubmitModal(taskId) {
+  vaSubmitTaskId = taskId;
+  var modal = document.getElementById('va-submit-modal');
+  if (modal) { modal.style.display = 'flex'; document.getElementById('va-result-text').value = ''; }
+}
+
+async function vaSubmitResult() {
+  var text = document.getElementById('va-result-text').value.trim();
+  if (!text) { alert('Please describe your result.'); return; }
+  if (!vaSubmitTaskId) { alert('No task selected.'); return; }
+  var res = await sb.from('client_tasks').update({ status:'submitted', result_text: text, submitted_at: new Date().toISOString() }).eq('id', vaSubmitTaskId);
+  if (res.error) { alert('Error submitting result.'); return; }
+  document.getElementById('va-submit-modal').style.display = 'none';
+  var ud = await sb.auth.getUser();
+  if (!ud.data || !ud.data.user) return;
+  var mem = await sb.from('members').select('email').eq('id', ud.data.user.id).single();
+  if (mem.data) loadVaTasks(mem.data.email);
+}
+
+async function respondToPairingFromTab(response, pairingId) {
+  var ud = await sb.auth.getUser();
+  if (!ud.data || !ud.data.user) return;
+  var uid = ud.data.user.id;
+  var mem = await sb.from('members').select('full_name, email').eq('id', uid).single();
+  var vaName = mem.data?.full_name || 'VA';
+
+  if (response === 'accepted') {
+    await sb.from('pairings').update({ status: 'agreed', updated_at: new Date().toISOString() }).eq('id', pairingId);
+    await sb.from('members').update({ pairing_status: 'accepted', client_paired: true, pairing_accepted_at: new Date().toISOString() }).eq('id', uid);
+    await sb.from('messages').insert([{ sender_id: uid, sender_name: vaName, sender_type: 'va', recipient_id: null, message: '✅ ' + vaName + ' has ACCEPTED their pairing. Onboarding is now unlocked.', is_broadcast: false, is_read: false, message_type: 'pairing_accepted', pairing_id: pairingId }]);
+    alert('✅ Pairing accepted! Your client will be notified.');
+  } else {
+    await sb.from('pairings').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', pairingId);
+    await sb.from('members').update({ pairing_status: 'declined', client_paired: false, pairing_declined_at: new Date().toISOString() }).eq('id', uid);
+    await sb.from('messages').insert([{ sender_id: uid, sender_name: vaName, sender_type: 'va', recipient_id: null, message: '❌ ' + vaName + ' has DECLINED their pairing. Please follow up.', is_broadcast: false, is_read: false, message_type: 'pairing_declined', pairing_id: pairingId }]);
+    alert('Pairing declined. Coach Di will be notified.');
+  }
+  loadPairedClients();
+}
+
+function fmtD(d) { if(!d) return '—'; return new Date(d).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}); }
+function escV(str) { if(!str) return ''; return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Hook into existing openTab to load new tabs
+var _origOpenTab = window.openTab;
+window.openTab = function(btn, name) {
+  if (_origOpenTab) _origOpenTab(btn, name);
+  if (name === 'paired-clients') loadPairedClients();
+  if (name === 'va-tasks') loadVaTasks();
+};
+
+// Initial load — detect recovery link or existing session
+(async function(){
+  var hash = window.location.hash || '';
+  var params = new URLSearchParams(hash.replace('#','?').replace('??','?'));
+  var type = params.get('type');
+  if(type === 'recovery'){
+    // Let onAuthStateChange handle it — just wait
+    return;
+  }
+  var session = await sb.auth.getSession();
+  if(session.data && session.data.session){
+    loadPortal();
+  }
+})();
+</script>
+</body>
+</html>
