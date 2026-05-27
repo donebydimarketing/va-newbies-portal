@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VA Newbies — Client Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --coffee:#3B2314;--coffee-mid:#6B4226;--coffee-light:#C4956A;
+  --cream:#F7F1EB;--cream-dark:#EDE4D8;--white:#fff;
+  --text:#2C1810;--muted:#8B6B55;--border:#D9C5B2;--bg:#F7F1EB;--card:#fff;
+  --green:#1B9A64;--red:#A32D2D;--orange:#B46414;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);min-height:100vh;}
+
+/* TOPBAR */
+.topbar{background:var(--coffee);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.logo{font-size:13px;font-weight:600;color:var(--cream);letter-spacing:.04em;}
+.ham{background:none;border:none;color:rgba(247,241,235,.6);font-size:20px;cursor:pointer;display:none;padding:4px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--coffee-light);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0;}
+.user-name{font-size:13px;color:var(--cream);}
+.status-badge{font-size:10px;padding:3px 10px;border-radius:99px;font-weight:500;}
+.badge-wait{background:rgba(196,149,106,.2);color:var(--coffee-light);}
+.badge-active{background:rgba(27,154,100,.15);color:#1B9A64;}
+.logout-btn{background:none;border:1px solid rgba(255,255,255,.15);color:rgba(247,241,235,.6);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;}
+
+/* TABS */
+.tabs{background:var(--coffee);display:flex;border-bottom:1px solid rgba(255,255,255,.08);padding:0 20px;overflow-x:auto;position:sticky;top:56px;z-index:99;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:11px 14px;font-size:12px;font-weight:500;color:rgba(247,241,235,.45);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;}
+.tab.active{color:var(--cream);border-bottom-color:var(--coffee-light);}
+.tab:hover{color:var(--cream);}
+
+/* MOBILE NAV */
+.mobile-nav{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:999;background:rgba(0,0,0,.5);}
+.mobile-nav.open{display:block;}
+.mobile-nav-inner{background:var(--coffee);width:240px;height:100%;padding:20px 0;display:flex;flex-direction:column;gap:4px;}
+.mobile-nav-close{color:var(--cream);font-size:20px;padding:0 20px 16px;cursor:pointer;background:none;border:none;}
+.mobile-tab{padding:12px 20px;font-size:13px;color:rgba(247,241,235,.6);cursor:pointer;border:none;background:none;text-align:left;width:100%;}
+.mobile-tab.active{color:var(--cream);background:rgba(255,255,255,.06);}
+
+/* CONTENT */
+.content{max-width:780px;margin:0 auto;padding:20px;}
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* WELCOME */
+.welcome-bar{background:var(--coffee);border-radius:12px;padding:18px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+.welcome-bar h2{font-size:18px;font-weight:500;color:#fff;margin-bottom:4px;}
+.welcome-bar h2 span{color:var(--coffee-light);}
+.welcome-bar p{font-size:12px;color:rgba(247,241,235,.55);line-height:1.6;}
+
+/* STEP TRACKER */
+.steps-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:14px;}
+.sec-label{font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;}
+.steps-row{display:flex;}
+.step{flex:1;text-align:center;position:relative;}
+.step:not(:last-child)::after{content:'';position:absolute;top:12px;left:50%;width:100%;height:1px;background:var(--border);z-index:0;}
+.step.done::after{background:var(--coffee-mid);}
+.sdot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;margin:0 auto 5px;position:relative;z-index:1;}
+.sdot.done{background:var(--coffee-mid);color:#fff;}
+.sdot.active{background:var(--coffee-light);color:#fff;}
+.sdot.future{background:var(--cream-dark);color:var(--muted);border:1px solid var(--border);}
+.slabel{font-size:9px;color:var(--muted);}
+
+/* GRIDS */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+
+/* STAT CARDS */
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.stat-val{font-size:20px;font-weight:500;color:var(--coffee);}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* SEC TITLE */
+.sec-title{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;margin-top:4px;}
+
+/* MINI CARDS */
+.mini-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;}
+.mc-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.mc-body{font-size:12px;color:var(--muted);line-height:1.6;}
+
+/* NEWS ROWS */
+.news-row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);}
+.news-row:last-child{border-bottom:none;padding-bottom:0;}
+.news-num{font-size:18px;font-weight:500;color:var(--coffee-mid);min-width:52px;}
+.nt{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.ns{font-size:11px;color:var(--muted);}
+
+/* TAGS */
+.tag{display:inline-block;font-size:10px;padding:3px 8px;border-radius:99px;margin:3px 3px 0 0;}
+.tag-yes{background:rgba(107,66,38,.1);color:var(--coffee-mid);}
+.tag-no{background:rgba(163,45,45,.08);color:var(--red);}
+.va-tag{font-size:11px;background:var(--cream-dark);color:var(--muted);padding:3px 8px;border-radius:6px;display:inline-block;margin:3px 3px 0 0;}
+
+/* REFERRAL */
+.ref-row{display:flex;gap:10px;align-items:center;background:var(--cream-dark);border-radius:10px;padding:12px 14px;margin-bottom:14px;flex-wrap:wrap;}
+.ref-icon{width:32px;height:32px;border-radius:50%;background:var(--coffee-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:14px;}
+.ref-text{font-size:12px;color:var(--muted);flex:1;line-height:1.5;min-width:120px;}
+.ref-btn{font-size:12px;font-weight:500;color:var(--coffee);background:none;border:1px solid var(--coffee-mid);border-radius:8px;padding:6px 14px;cursor:pointer;white-space:nowrap;}
+
+/* COMING SOON */
+.cs-bar{background:var(--coffee);border-radius:12px;padding:16px 18px;margin-bottom:14px;display:flex;gap:14px;align-items:flex-start;}
+.cs-icon{width:36px;height:36px;border-radius:10px;background:var(--coffee-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;color:#fff;}
+.cs-title{font-size:14px;font-weight:500;color:#fff;margin-bottom:4px;}
+.cs-body{font-size:12px;color:rgba(247,241,235,.55);line-height:1.5;}
+
+/* TESTIMONIALS */
+.testimonials-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.test-card{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:transform .2s;}
+.test-card:hover{transform:translateY(-2px);}
+.test-card img{width:100%;display:block;object-fit:cover;}
+.test-caption{padding:8px 10px;background:var(--card);font-size:11px;color:var(--muted);}
+.new-badge{position:absolute;top:8px;right:8px;background:var(--coffee-light);color:#fff;font-size:9px;font-weight:600;padding:2px 7px;border-radius:99px;letter-spacing:.04em;text-transform:uppercase;}
+.test-empty{background:var(--cream-dark);border-radius:10px;padding:20px;text-align:center;font-size:12px;color:var(--muted);grid-column:1/-1;}
+
+/* LIGHTBOX */
+.lightbox{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center;padding:20px;}
+.lightbox.open{display:flex;}
+.lightbox img{max-width:90%;max-height:90vh;border-radius:10px;object-fit:contain;}
+.lb-close{position:fixed;top:16px;right:20px;color:#fff;font-size:28px;cursor:pointer;line-height:1;background:none;border:none;}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:14px 0;}
+
+/* VA CARD (existing pairing) */
+.va-hero-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:14px;}
+.va-hero{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;}
+.va-avatar{width:56px;height:56px;border-radius:50%;background:var(--coffee-mid);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:#fff;flex-shrink:0;overflow:hidden;}
+.va-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.va-name{font-size:16px;font-weight:500;color:var(--text);margin-bottom:3px;}
+.va-bio{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px;}
+.va-detail{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.vd-label{font-size:10px;color:var(--muted);margin-bottom:2px;}
+.vd-val{font-size:12px;font-weight:500;color:var(--text);}
+.portfolio-btn{display:inline-flex;align-items:center;gap:6px;background:var(--cream-dark);border:1px solid var(--border);border-radius:8px;padding:7px 14px;color:var(--coffee-mid);font-size:12px;font-weight:500;text-decoration:none;margin-top:8px;}
+
+/* NO PAIRING */
+.no-pairing{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px 20px;text-align:center;margin-bottom:14px;}
+.np-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:6px;}
+.np-body{font-size:12px;color:var(--muted);line-height:1.6;max-width:320px;margin:0 auto;}
+
+/* CHAT */
+.chat-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:14px;}
+.chat-warning{background:#FEF8F0;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--coffee-mid);margin-bottom:10px;line-height:1.6;}
+.chat-messages{min-height:100px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;max-height:300px;overflow-y:auto;}
+.bubble{padding:8px 12px;border-radius:10px;font-size:12px;line-height:1.5;max-width:80%;}
+.bubble.them{background:var(--cream-dark);color:var(--text);border-radius:10px 10px 10px 2px;}
+.bubble.me{background:var(--coffee-mid);color:#fff;border-radius:10px 10px 2px 10px;align-self:flex-end;}
+.bubble.admin{background:rgba(59,35,20,.06);color:var(--muted);font-size:11px;font-style:italic;align-self:center;text-align:center;border-radius:8px;padding:6px 10px;}
+.bubble-name{font-size:10px;color:var(--muted);margin-bottom:2px;}
+.chat-locked{text-align:center;font-size:12px;color:var(--muted);padding:16px 0;}
+.chat-input-row{display:flex;gap:8px;}
+.chat-input{flex:1;background:var(--cream-dark);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text);font-family:inherit;}
+.chat-send{background:var(--coffee-mid);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;}
+
+/* TASKS TAB */
+.task-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.add-task-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.form-full{grid-column:1/-1;}
+.f-label{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.f-input{background:var(--cream-dark);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;width:100%;}
+.f-input:focus{outline:none;border-color:var(--coffee-light);}
+.f-textarea{background:var(--cream-dark);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;min-height:70px;resize:none;width:100%;}
+.btn-add{background:var(--coffee-mid);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:500;cursor:pointer;margin-top:4px;}
+
+.task-card-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;}
+.task-item-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.task-item-name{font-size:14px;font-weight:500;color:var(--text);}
+.task-item-badge{font-size:10px;padding:3px 9px;border-radius:99px;font-weight:500;}
+.badge-open{background:rgba(107,66,38,.1);color:var(--coffee-mid);}
+.badge-submitted{background:rgba(27,154,100,.1);color:var(--green);}
+.badge-urgent{background:rgba(163,45,45,.08);color:var(--red);}
+.badge-done{background:rgba(139,107,85,.08);color:var(--muted);}
+.badge-revision{background:rgba(180,100,20,.1);color:var(--orange);}
+.task-item-desc{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.5;}
+.task-item-meta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px;}
+.tm-label{font-size:10px;color:var(--muted);}
+.tm-val{font-size:12px;font-weight:500;color:var(--text);}
+.deadline-red{color:var(--red);font-weight:500;}
+.result-box{background:var(--cream-dark);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:8px;}
+.result-label{font-size:10px;font-weight:500;color:var(--coffee-mid);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.task-actions{display:flex;gap:8px;}
+.btn-approve{background:var(--coffee-mid);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;}
+.btn-revise{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--text);cursor:pointer;}
+
+/* PAST PAIRINGS */
+.past-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;}
+.past-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.past-name{font-size:14px;font-weight:500;color:var(--text);}
+.past-badge{font-size:10px;padding:3px 8px;border-radius:99px;background:var(--cream-dark);color:var(--muted);}
+.past-meta{display:flex;gap:14px;flex-wrap:wrap;}
+.pm-label{font-size:10px;color:var(--muted);}
+.pm-val{font-size:12px;font-weight:500;color:var(--text);}
+.feedback-quote{font-size:12px;color:var(--muted);font-style:italic;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+
+/* COMING SOON TAB */
+.coming-tab{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:40px 20px;text-align:center;}
+.ct-icon{font-size:32px;margin-bottom:10px;color:var(--coffee-light);}
+.ct-title{font-size:16px;font-weight:500;color:var(--text);margin-bottom:6px;}
+.ct-body{font-size:12px;color:var(--muted);line-height:1.6;max-width:300px;margin:0 auto;}
+
+/* EXISTING DASHBOARD STYLES PRESERVED */
+.skill-tag{background:rgba(107,66,38,.1);border:1px solid rgba(107,66,38,.2);color:var(--coffee-mid);font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px;display:inline-block;margin:3px 3px 0 0;}
+.avail-chip{background:var(--cream-dark);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;margin:3px 3px 0 0;}
+.avail-chip strong{color:var(--text);}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px;}
+.info-item{padding:12px 14px;background:var(--cream-dark);border-radius:9px;border:1px solid var(--border);}
+.info-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.info-val{font-size:14px;font-weight:600;color:var(--text);}
+.progress-section{margin-bottom:16px;}
+.progress-header{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;color:var(--muted);}
+.progress-bar{height:8px;background:var(--cream-dark);border-radius:4px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--coffee-mid),var(--coffee-light));transition:width .8s ease;}
+.terms-box{background:var(--cream-dark);border:1px solid var(--border);border-radius:8px;padding:16px;max-height:240px;overflow-y:auto;font-size:13px;line-height:1.7;color:var(--muted);white-space:pre-wrap;margin-bottom:16px;}
+.agree-row{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:rgba(107,66,38,.06);border:1px solid rgba(107,66,38,.2);border-radius:8px;cursor:pointer;margin-bottom:14px;}
+.agree-row input{width:18px;height:18px;accent-color:var(--coffee-mid);margin-top:1px;flex-shrink:0;}
+.agree-row label{font-size:13px;line-height:1.5;cursor:pointer;color:var(--text);}
+.task-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+.old-task-card{background:var(--cream-dark);border:2px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px;}
+.old-task-card:hover{border-color:var(--coffee-mid);}
+.old-task-card.selected{border-color:var(--coffee-mid);background:rgba(107,66,38,.08);}
+.task-check{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.old-task-card.selected .task-check{background:var(--coffee-mid);border-color:var(--coffee-mid);}
+.task-checkmark{display:none;color:white;font-size:12px;}
+.old-task-card.selected .task-checkmark{display:block;}
+.task-name{font-size:13px;font-weight:600;color:var(--text);}
+.task-desc{font-size:11px;color:var(--muted);margin-top:2px;}
+.custom-add-row{display:flex;gap:8px;margin-top:12px;}
+.custom-add-row input{flex:1;background:var(--cream-dark);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-size:13px;outline:none;font-family:inherit;}
+.custom-add-row input:focus{border-color:var(--coffee-light);}
+.rating-group{margin-bottom:20px;}
+.rating-label{font-size:13px;font-weight:600;margin-bottom:4px;display:flex;justify-content:space-between;color:var(--text);}
+.rating-hint{font-size:12px;color:var(--muted);margin-bottom:8px;}
+.stars{display:flex;gap:8px;}
+.star{font-size:28px;cursor:pointer;opacity:.25;transition:all .15s;line-height:1;}
+.star.active{opacity:1;transform:scale(1.1);}
+.yesno{display:flex;gap:10px;}
+.yesno-btn{flex:1;padding:12px;border-radius:8px;border:2px solid var(--border);background:var(--cream-dark);color:var(--muted);font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;text-align:center;}
+.yesno-btn.yes.active{border-color:var(--green);background:rgba(27,154,100,.1);color:var(--green);}
+.yesno-btn.no.active{border-color:var(--red);background:rgba(163,45,45,.08);color:var(--red);}
+.task-complete-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--cream-dark);border-radius:8px;border:1px solid var(--border);margin-bottom:8px;flex-wrap:wrap;gap:8px;}
+.task-complete-name{font-size:13px;font-weight:500;color:var(--text);}
+.status-btns{display:flex;gap:6px;}
+.status-btn{padding:5px 12px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
+.status-btn.done.active{border-color:var(--green);background:rgba(27,154,100,.1);color:var(--green);}
+.status-btn.not.active{border-color:var(--red);background:rgba(163,45,45,.08);color:var(--red);}
+.btn-primary{background:var(--coffee-mid);color:#fff;border:none;border-radius:8px;padding:12px 20px;font-size:13px;font-weight:600;cursor:pointer;width:100%;margin-top:10px;}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:9px 16px;font-size:13px;cursor:pointer;}
+.btn-outline:hover{border-color:var(--coffee-mid);color:var(--text);}
+.alert{padding:12px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;line-height:1.5;}
+.alert-success{background:rgba(27,154,100,.1);border:1px solid rgba(27,154,100,.3);color:var(--green);}
+.alert-error{background:rgba(163,45,45,.08);border:1px solid rgba(163,45,45,.25);color:var(--red);}
+.alert-info{background:rgba(107,66,38,.08);border:1px solid rgba(107,66,38,.2);color:var(--coffee-mid);}
+.hidden{display:none!important;}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--coffee-mid);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;gap:14px;}
+.success-view{text-align:center;padding:32px 20px;}
+.success-view .icon{font-size:48px;margin-bottom:14px;}
+.success-view h3{font-size:20px;font-weight:700;margin-bottom:8px;color:var(--text);}
+.success-view p{color:var(--muted);font-size:13px;line-height:1.6;}
+textarea{width:100%;background:var(--cream-dark);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:13px;resize:vertical;min-height:90px;outline:none;font-family:inherit;line-height:1.6;}
+textarea:focus{border-color:var(--coffee-light);}
+hr{border:none;border-top:1px solid var(--border);margin:16px 0;}
+.va-switcher{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.va-tab-sw{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;border:2px solid var(--border);background:var(--card);cursor:pointer;transition:all .2s;font-size:13px;font-weight:500;color:var(--muted);}
+.va-tab-sw:hover{border-color:var(--coffee-mid);color:var(--text);}
+.va-tab-sw.active{border-color:var(--coffee-mid);background:rgba(107,66,38,.08);color:var(--text);}
+.va-tab-sw .tab-avatar{width:26px;height:26px;background:var(--coffee-mid);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+.va-tab-sw .tab-status{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.va-tab-sw .tab-status.active{background:var(--green);}
+.va-tab-sw .tab-status.pending,.va-tab-sw .tab-status.agreed{background:var(--coffee-light);}
+.va-tab-sw .tab-status.completed{background:var(--muted);}
+.status-banner{border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;font-size:13px;font-weight:500;flex-wrap:wrap;}
+.status-banner.pending{background:rgba(139,107,85,.08);border:1px solid var(--border);}
+.status-banner.agreed{background:rgba(107,66,38,.08);border:1px solid rgba(107,66,38,.2);}
+.status-banner.active{background:rgba(27,154,100,.06);border:1px solid rgba(27,154,100,.2);}
+.status-banner.pending_review{background:rgba(180,100,20,.06);border:1px solid rgba(180,100,20,.2);}
+.status-banner.completed{background:rgba(107,66,38,.06);border:1px solid rgba(107,66,38,.2);}
+.banner-icon{font-size:24px;flex-shrink:0;}
+.banner-title{font-weight:700;font-size:14px;color:var(--text);}
+.banner-sub{color:var(--muted);font-size:12px;margin-top:2px;}
+
+@media(max-width:640px){
+  .ham{display:block;}
+  .user-name{display:none;}
+  .tabs{display:none;}
+  .grid3{grid-template-columns:1fr 1fr;}
+  .testimonials-grid{grid-template-columns:1fr;}
+  .form-row{grid-template-columns:1fr;}
+  .task-stats{grid-template-columns:1fr 1fr;}
+  .va-detail{grid-template-columns:1fr;}
+  .past-meta{gap:10px;}
+  .welcome-bar{flex-direction:column;}
+  .info-grid{grid-template-columns:1fr 1fr;}
+  .task-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="ham" onclick="toggleMobileNav()">☰</button>
+    <div class="logo">VA Newbies — Client Portal</div>
+  </div>
+  <div class="topbar-right">
+    <div class="user-avatar" id="userInitials">?</div>
+    <span class="user-name" id="userName">Loading...</span>
+    <span class="status-badge badge-wait" id="statusBadge">Loading</span>
+    <button class="logout-btn" onclick="doLogout()">Log out</button>
+  </div>
+</div>
+
+<div class="tabs" id="desktopTabs">
+  <button class="tab active" onclick="switchTab('home',this)">Home</button>
+  <button class="tab" onclick="switchTab('pairing',this)">My Pairing</button>
+  <button class="tab" onclick="switchTab('tasks',this)">Tasks</button>
+  <button class="tab" onclick="switchTab('past',this)">Past Pairings</button>
+  <button class="tab" onclick="switchTab('resources',this)">Resources</button>
+  <button class="tab" onclick="switchTab('videos',this)">Videos</button>
+  <button class="tab" onclick="switchTab('paperwork',this)">Paperwork</button>
+</div>
+
+<div class="mobile-nav" id="mobileNav">
+  <div class="mobile-nav-inner">
+    <button class="mobile-nav-close" onclick="toggleMobileNav()">✕</button>
+    <button class="mobile-tab active" onclick="switchTab('home',this);toggleMobileNav()">Home</button>
+    <button class="mobile-tab" onclick="switchTab('pairing',this);toggleMobileNav()">My Pairing</button>
+    <button class="mobile-tab" onclick="switchTab('tasks',this);toggleMobileNav()">Tasks</button>
+    <button class="mobile-tab" onclick="switchTab('past',this);toggleMobileNav()">Past Pairings</button>
+    <button class="mobile-tab" onclick="switchTab('resources',this);toggleMobileNav()">Resources</button>
+    <button class="mobile-tab" onclick="switchTab('videos',this);toggleMobileNav()">Videos</button>
+    <button class="mobile-tab" onclick="switchTab('paperwork',this);toggleMobileNav()">Paperwork</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- HOME TAB -->
+  <div class="panel active" id="tab-home">
+    <div class="welcome-bar">
+      <div>
+        <h2>Welcome back, <span id="welcomeName">there</span>!</h2>
+        <p id="welcomeSub">Your VA pairing is being arranged. Here is what to know while you wait.</p>
+      </div>
+      <span class="status-badge badge-wait" id="welcomeBadge">Awaiting pairing</span>
+    </div>
+
+    <div class="steps-wrap">
+      <div class="sec-label">Your pairing journey</div>
+      <div class="steps-row" id="stepsRow">
+        <div class="step done"><div class="sdot done">✓</div><div class="slabel">Signed up</div></div>
+        <div class="step done"><div class="sdot done">✓</div><div class="slabel">Handbook</div></div>
+        <div class="step" id="step3"><div class="sdot active">⏳</div><div class="slabel">Matching</div></div>
+        <div class="step"><div class="sdot future">4</div><div class="slabel">Meet VA</div></div>
+        <div class="step"><div class="sdot future">5</div><div class="slabel">Start</div></div>
+      </div>
+    </div>
+
+    <div class="grid3">
+      <div class="stat-card"><div class="stat-label">Days since signup</div><div class="stat-val" id="daysSince">—</div><div class="stat-sub">Matching in progress</div></div>
+      <div class="stat-card"><div class="stat-label">Past pairings</div><div class="stat-val" id="pastPairingsCount">0</div><div class="stat-sub">First pairing soon</div></div>
+      <div class="stat-card"><div class="stat-label">Days until end</div><div class="stat-val" id="daysUntilEnd">—</div><div class="stat-sub" id="daysUntilEndSub">No active pairing</div></div>
+    </div>
+
+    <div class="sec-title">PH VA industry snapshot</div>
+    <div class="mini-card" style="margin-bottom:14px;">
+      <div class="news-row"><div class="news-num">1.5M+</div><div><div class="nt">Filipino VAs active globally</div><div class="ns">Philippines ranks #1 in English-speaking remote talent in Asia</div></div></div>
+      <div class="news-row"><div class="news-num">92%</div><div><div class="nt">Client retention for trained VAs</div><div class="ns">Skilled VAs consistently outperform general freelancers</div></div></div>
+      <div class="news-row"><div class="news-num">3x</div><div><div class="nt">Faster task turnaround vs DIY</div><div class="ns">Clients who delegate early scale faster and burn out less</div></div></div>
+    </div>
+
+    <div class="sec-title">What our clients say</div>
+    <div class="testimonials-grid" id="testimonialsGrid">
+      <div class="test-empty">Testimonials coming soon. Check back here!</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="sec-title">Refer a peer</div>
+    <div class="ref-row">
+      <div class="ref-icon">👥</div>
+      <div class="ref-text">Know someone overwhelmed but not ready to hire? Send them here. You get priority access to top VAs next term.</div>
+      <button class="ref-btn" onclick="copyReferral()">Copy link</button>
+    </div>
+
+    <div class="cs-bar">
+      <div class="cs-icon">🚀</div>
+      <div>
+        <div class="cs-title">VA Newbies International — coming soon</div>
+        <div class="cs-body">Expanding beyond the Philippines. As a host client, you get early access and first pick of internationally certified VA talent.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MY PAIRING TAB -->
+  <div class="panel" id="tab-pairing">
+    <div id="loadingView" class="loading"><div class="spinner"></div><p style="color:var(--muted)">Loading your dashboard...</p></div>
+
+    <div id="mainView" class="hidden">
+      <div id="vaSwitcher" class="va-switcher hidden"></div>
+      <div id="statusBannerWrap"></div>
+      <div id="vaSectionWrap"></div>
+      <div id="pairingInfoWrap"></div>
+      <div id="progressSection" class="hidden">
+        <div class="mini-card">
+          <div class="sec-label">21-Day Progress</div>
+          <div class="progress-section">
+            <div class="progress-header"><span id="progressLabel">Day 0 of 21</span><span id="progressPct">0%</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+      <div id="termsSection" class="mini-card hidden">
+        <div class="mc-title" style="margin-bottom:6px;">📜 Terms of Engagement</div>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">Please read and agree before selecting tasks.</p>
+        <div class="terms-box" id="termsText"></div>
+        <div id="agreedNotice" class="alert alert-success hidden">✅ You agreed to these terms on <span id="agreedDate"></span>.</div>
+        <div class="agree-row hidden" id="agreeRow" onclick="toggleAgree()">
+          <input type="checkbox" id="agreeCheck">
+          <label for="agreeCheck"><strong>I have read and agree</strong> to the terms above. I commit to providing full end-of-term feedback.</label>
+        </div>
+        <button class="btn-primary hidden" id="agreeBtn" onclick="submitAgreement()" disabled>Agree & Continue to Task Selection →</button>
+      </div>
+      <div class="mini-card hidden" id="tasksSection">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="mc-title">✅ Tasks to Delegate</div>
+          <span id="taskCountBadge" style="font-size:12px;color:var(--muted);">0 selected</span>
+        </div>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">Select everything you want your VA to work on during this 3-week engagement.</p>
+        <div class="task-grid" id="taskGrid"></div>
+        <hr>
+        <p style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;">+ Add a custom task:</p>
+        <div class="custom-add-row">
+          <input type="text" id="customTaskInput" placeholder="e.g. Manage my Shopify store…">
+          <button class="btn-outline" onclick="addCustomTask()">Add</button>
+        </div>
+        <div id="customTaskChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+        <button class="btn-primary" style="margin-top:16px;" onclick="saveTasks()" id="saveTasksBtn">Save Task List →</button>
+      </div>
+      <div class="mini-card hidden" id="activeNotice">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <span style="font-size:32px;">🚀</span>
+          <div>
+            <div style="font-size:14px;font-weight:700;margin-bottom:4px;color:var(--text);">Your VA is on it!</div>
+            <div style="color:var(--muted);font-size:12px;line-height:1.6;">The engagement is active. Your VA is working on your selected tasks.</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding:12px;background:var(--cream-dark);border-radius:8px;border:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">Your task list</div>
+          <div id="activeTaskList"></div>
+        </div>
+      </div>
+      <div class="mini-card hidden" id="feedbackSection">
+        <div class="mc-title" style="margin-bottom:6px;">⭐ End-of-Term Feedback</div>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:18px;">Your 3 weeks are done! Please complete this feedback to close the pairing.</p>
+        <div id="feedbackAlreadyDone" class="hidden">
+          <div class="success-view"><div class="icon">🎉</div><h3>Feedback Submitted!</h3><p>Your review is with Coach Di for approval. Once approved, your VA will be able to see it. Thank you!</p></div>
+        </div>
+        <div id="feedbackFormWrap">
+          <div id="feedbackAlert"></div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--text);">📋 Mark each task:</div>
+          <div id="taskCompleteList"></div>
+          <hr>
+          <div class="rating-group"><div class="rating-label">Overall Experience <span id="rv-overall" style="color:var(--coffee-light);"></span></div><div class="rating-hint">How was working with this VA overall?</div><div class="stars" data-key="overall" onclick="setRating(this)"><span class="star" data-val="1">⭐</span><span class="star" data-val="2">⭐</span><span class="star" data-val="3">⭐</span><span class="star" data-val="4">⭐</span><span class="star" data-val="5">⭐</span></div></div>
+          <div class="rating-group"><div class="rating-label">Communication <span id="rv-communication" style="color:var(--coffee-light);"></span></div><div class="rating-hint">Did they communicate clearly and on time?</div><div class="stars" data-key="communication" onclick="setRating(this)"><span class="star" data-val="1">⭐</span><span class="star" data-val="2">⭐</span><span class="star" data-val="3">⭐</span><span class="star" data-val="4">⭐</span><span class="star" data-val="5">⭐</span></div></div>
+          <div class="rating-group"><div class="rating-label">Quality of Work <span id="rv-quality" style="color:var(--coffee-light);"></span></div><div class="rating-hint">Were the outputs good?</div><div class="stars" data-key="quality" onclick="setRating(this)"><span class="star" data-val="1">⭐</span><span class="star" data-val="2">⭐</span><span class="star" data-val="3">⭐</span><span class="star" data-val="4">⭐</span><span class="star" data-val="5">⭐</span></div></div>
+          <div class="rating-group"><div class="rating-label">Reliability <span id="rv-reliability" style="color:var(--coffee-light);"></span></div><div class="rating-hint">Did they meet deadlines?</div><div class="stars" data-key="reliability" onclick="setRating(this)"><span class="star" data-val="1">⭐</span><span class="star" data-val="2">⭐</span><span class="star" data-val="3">⭐</span><span class="star" data-val="4">⭐</span><span class="star" data-val="5">⭐</span></div></div>
+          <hr>
+          <div class="rating-group"><div class="rating-label" style="margin-bottom:12px;">Would you continue working with this VA?</div><div class="yesno"><div class="yesno-btn yes" onclick="setYesNo(true, this)">👍 Yes, continue</div><div class="yesno-btn no" onclick="setYesNo(false, this)">👎 Not right now</div></div></div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text);">Additional Comments <span style="color:var(--muted);font-weight:400;">(optional)</span></div>
+          <textarea id="feedbackComments" placeholder="What went well? What could be improved?"></textarea>
+          <button class="btn-primary" style="margin-top:14px;" onclick="submitFeedback()" id="submitFeedbackBtn">Submit My Feedback 🚀</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-title" style="margin-top:16px;">Group chat</div>
+    <div class="chat-wrap" id="chatWrap">
+      <div class="chat-warning">🔒 This chat is for task updates and quick check-ins only. Do not share passwords, login credentials, or sensitive files here. Use email for those.</div>
+      <div class="chat-messages" id="chatMessages"><div class="chat-locked">Chat unlocks once your VA is matched.</div></div>
+      <div class="chat-input-row" id="chatInputRow" style="display:none;">
+        <input class="chat-input" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChat()"/>
+        <button class="chat-send" onclick="sendChat()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TASKS TAB -->
+  <div class="panel" id="tab-tasks">
+    <div class="task-stats" id="taskStats">
+      <div class="stat-card"><div class="stat-label">Total tasks</div><div class="stat-val" id="totalTasks">0</div></div>
+      <div class="stat-card"><div class="stat-label">Open</div><div class="stat-val" id="openTasks">0</div></div>
+      <div class="stat-card"><div class="stat-label">Submitted</div><div class="stat-val" id="submittedTasks">0</div></div>
+      <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-val" id="completedTasks">0</div></div>
+    </div>
+
+    <div class="sec-title">Add a new task</div>
+    <div class="add-task-card" id="addTaskForm">
+      <div class="no-pairing" id="noActivePairingMsg" style="padding:16px;display:none;">
+        <div class="np-title">No active pairing</div>
+        <div class="np-body">You can add tasks once your VA is matched.</div>
+      </div>
+      <div id="addTaskFormInner">
+        <div class="form-row">
+          <div class="form-full"><div class="f-label">Task title</div><input class="f-input" id="newTaskTitle" placeholder="e.g. Create 3 Instagram posts for May launch"/></div>
+          <div class="form-full"><div class="f-label">Description / instructions</div><textarea class="f-textarea" id="newTaskDesc" placeholder="Add details, links, brand guidelines, references..."></textarea></div>
+          <div><div class="f-label">Deadline</div><input class="f-input" id="newTaskDeadline" type="date"/></div>
+          <div><div class="f-label">Priority</div><select class="f-input" id="newTaskPriority"><option value="normal">Normal</option><option value="urgent">Urgent</option></select></div>
+        </div>
+        <button class="btn-add" onclick="addNewTask()">Add task</button>
+      </div>
+    </div>
+
+    <div class="sec-title">Your tasks</div>
+    <div id="clientTasksList"><div class="no-pairing"><div class="np-title">No tasks yet</div><div class="np-body">Add your first task above once your VA is matched.</div></div></div>
+  </div>
+
+  <!-- PAST PAIRINGS TAB -->
+  <div class="panel" id="tab-past">
+    <div class="sec-title">Your pairing history</div>
+    <div id="pastPairingsContent">
+      <div class="no-pairing"><div class="np-title">No past pairings yet</div><div class="np-body">Once your first 21-day pairing wraps up, your VA card, feedback, and pairing summary will appear here.</div></div>
+    </div>
+  </div>
+
+  <!-- RESOURCES TAB -->
+  <div class="panel" id="tab-resources">
+    <div class="sec-title">Best practices</div>
+    <div class="grid2">
+      <div class="mini-card"><div class="mc-title">The one task rule</div><div class="mc-body">Give your VA one clear task at a time. Clarity produces better results than a long to-do list.</div></div>
+      <div class="mini-card"><div class="mc-title">The 21-day method</div><div class="mc-body">Trust the process. It takes 21 days to build a reliable working rhythm with your VA.</div></div>
+      <div class="mini-card"><div class="mc-title">Feedback before niche</div><div class="mc-body">Give feedback early and often. A VA who knows your standards becomes irreplaceable.</div></div>
+      <div class="mini-card"><div class="mc-title">Communication standards</div><div class="mc-body">Set response time expectations on day one. Ambiguity slows everything down.</div></div>
+    </div>
+    <div class="sec-title" style="margin-top:4px;">What you can and cannot delegate</div>
+    <div class="grid2">
+      <div class="mini-card">
+        <div class="mc-title" style="margin-bottom:8px;">You can delegate</div>
+        <span class="tag tag-yes">Email management</span><span class="tag tag-yes">Scheduling</span><span class="tag tag-yes">Social media</span><span class="tag tag-yes">Research</span><span class="tag tag-yes">Data entry</span><span class="tag tag-yes">Canva graphics</span><span class="tag tag-yes">File organization</span>
+      </div>
+      <div class="mini-card">
+        <div class="mc-title" style="margin-bottom:8px;">Keep these to yourself</div>
+        <span class="tag tag-no">Financial decisions</span><span class="tag tag-no">Account passwords</span><span class="tag tag-no">Legal signing</span><span class="tag tag-no">Personal banking</span><span class="tag tag-no">HR decisions</span>
+      </div>
+    </div>
+    <div class="sec-title" style="margin-top:4px;">What makes a great host client</div>
+    <div class="mini-card">
+      <div class="news-row"><div class="news-num" style="font-size:16px;min-width:32px;">01</div><div><div class="nt">Give clear written instructions</div><div class="ns">Voice notes are harder for VAs to reference and track.</div></div></div>
+      <div class="news-row"><div class="news-num" style="font-size:16px;min-width:32px;">02</div><div><div class="nt">Respond within 24 hours</div><div class="ns">Delayed approvals stall your VA and reduce output quality.</div></div></div>
+      <div class="news-row"><div class="news-num" style="font-size:16px;min-width:32px;">03</div><div><div class="nt">Give honest end-of-term feedback</div><div class="ns">Your feedback helps the next host client get a better-prepared VA.</div></div></div>
+    </div>
+  </div>
+
+  <!-- VIDEOS TAB -->
+  <div class="panel" id="tab-videos">
+    <div class="coming-tab"><div class="ct-icon">🎬</div><div class="ct-title">Training videos — coming soon</div><div class="ct-body">Short guides on how to work with your VA, delegate effectively, and get the most out of your 21-day pairing.</div></div>
+  </div>
+
+  <!-- PAPERWORK TAB -->
+  <div class="panel" id="tab-paperwork">
+    <div class="sec-title">Host client handbook</div>
+    <div class="mini-card" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <div style="font-size:32px;">📖</div>
+        <div style="flex:1;">
+          <div class="mc-title">Host Client Handbook</div>
+          <div class="mc-body">Everything you need to know about the 21-day pairing -- how it works, what to delegate, and how to give feedback.</div>
+        </div>
+        <a href="https://drive.google.com/file/d/1l9EqCpS6ZxknlNPGOeyVG5KmWxqduUFc/view?usp=sharing" target="_blank" style="background:var(--coffee-mid);color:#fff;text-decoration:none;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:500;white-space:nowrap;">Download →</a>
+      </div>
+    </div>
+    <div class="coming-tab"><div class="ct-icon">📄</div><div class="ct-title">Agreements and documents — coming soon</div><div class="ct-body">Your NDA, pairing terms, and signed documents will live here. You will be notified when paperwork is ready.</div></div>
+  </div>
+
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lb-close">✕</button>
+  <img id="lightboxImg" src="" alt="Testimonial"/>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://mbcwgtrliiocqcgwbfnu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iY3dndHJsaWlvY3FjZ3diZm51Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NDQwMzMsImV4cCI6MjA5MTUyMDAzM30.bs3bm6PEK82hr2T9NPs6lQ6jlgolL6wE-TDblXDEMVE';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let clientRecord = null;
+let allPairings = [];
+let pairing = null;
+let taskCategories = [];
+let pairingTasks = [];
+let selectedTaskIds = new Set();
+let customTasks = [];
+let taskStatuses = {};
+let ratings = { overall:0, communication:0, quality:0, reliability:0 };
+let continueAnswer = null;
+let currentPairingId = null;
+let chatChannel = null;
+
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { data:{ session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'client-signup.html'; return; }
+    await loadDashboard(session.user);
+    loadTestimonials();
+  } catch(e) {
+    console.error('Dashboard load error:', e);
+    hide('loadingView');
+    show('mainView');
+  }
+});
+
+async function loadDashboard(user) {
+  const { data:clientRows, error:clientErr } = await sb.from('clients').select('*').eq('auth_user_id', user.id).limit(1);
+  const client = (clientRows && clientRows.length > 0) ? clientRows[0] : null;
+  if (!client) {
+    const { data:newClientRows } = await sb.from('clients').insert({ auth_user_id:user.id, email:user.email, full_name:user.user_metadata?.full_name||user.email, signed_up_at:new Date().toISOString() }).select();
+    clientRecord = (newClientRows && newClientRows.length > 0) ? newClientRows[0] : { auth_user_id:user.id, email:user.email, full_name:user.user_metadata?.full_name||user.email };
+  } else { clientRecord = client; }
+
+  const name = clientRecord.full_name || user.email;
+  const first = name.split(' ')[0];
+  const initials = name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('userInitials').textContent = initials;
+  document.getElementById('userName').textContent = first;
+  document.getElementById('welcomeName').textContent = first;
+  document.getElementById('headerName') && (document.getElementById('headerName').textContent = name);
+
+  if (clientRecord.signed_up_at || clientRecord.created_at) {
+    const days = Math.floor((Date.now() - new Date(clientRecord.signed_up_at||clientRecord.created_at)) / 86400000);
+    document.getElementById('daysSince').textContent = days;
+  }
+
+  const { data:pairingRows, error:pErr } = await sb.from('pairings').select('*, members(id,full_name,email,tier,bio,skills,canva_portfolio_url,photo_url)').eq('client_id', clientRecord.id).not('status','eq','cancelled').order('created_at',{ascending:false});
+  hide('loadingView');
+
+  if (pErr || !pairingRows || pairingRows.length === 0) { show('mainView'); return; }
+
+  allPairings = pairingRows;
+  const { data:cats } = await sb.from('task_categories').select('*').eq('is_active',true).order('sort_order');
+  taskCategories = cats || [];
+  show('mainView');
+  if (allPairings.length > 1) { buildVASwitcher(); show('vaSwitcher'); }
+  await switchToPairing(0);
+
+  const completed = allPairings.filter(p=>p.status==='completed');
+  document.getElementById('pastPairingsCount').textContent = completed.length;
+  loadPastPairings(completed);
+  loadClientTasks();
+
+  // Days until end stat
+  const activePairingForStat = allPairings.find(p => p.status === 'active' || p.status === 'agreed');
+  if (activePairingForStat && activePairingForStat.end_date) {
+    const daysLeft = Math.max(0, Math.ceil((new Date(activePairingForStat.end_date) - new Date()) / 86400000));
+    document.getElementById('daysUntilEnd').textContent = daysLeft;
+    document.getElementById('daysUntilEndSub').textContent = daysLeft === 0 ? 'Ends today!' : 'Days remaining';
+  }
+}
+
+function buildVASwitcher() {
+  document.getElementById('vaSwitcher').innerHTML = allPairings.map((p,i) => {
+    const va = p.members;
+    const name = va?.full_name || va?.email?.split('@')[0] || 'VA';
+    const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    return `<div class="va-tab-sw" id="vaTab${i}" onclick="switchToPairing(${i})"><div class="tab-avatar">${initials}</div><span>${name}</span><div class="tab-status ${p.status}"></div></div>`;
+  }).join('');
+}
+
+async function switchToPairing(index) {
+  pairing = allPairings[index];
+  pairingTasks = []; selectedTaskIds = new Set(); customTasks = []; taskStatuses = {};
+  ratings = {overall:0,communication:0,quality:0,reliability:0}; continueAnswer = null;
+  allPairings.forEach((_,i) => { const t=document.getElementById(`vaTab${i}`); if(t) t.classList.toggle('active',i===index); });
+  ['termsSection','tasksSection','activeNotice','feedbackSection','progressSection'].forEach(id=>hide(id));
+  ['agreeRow','agreeBtn','agreedNotice'].forEach(id=>hide(id));
+  document.getElementById('taskGrid').innerHTML = '';
+  document.getElementById('customTaskChips').innerHTML = '';
+  document.getElementById('activeTaskList').innerHTML = '';
+  if (pairing.members?.id) {
+    const { data:availData } = await sb.from('va_availability').select('*').eq('member_id',pairing.members.id).single();
+    pairing.va_availability = availData || null;
+  }
+  const { data:tasks } = await sb.from('pairing_tasks').select('*, task_categories(name,icon)').eq('pairing_id',pairing.id);
+  pairingTasks = tasks || [];
+  const { data:existingFB } = await sb.from('client_feedback').select('id,approved').eq('pairing_id',pairing.id).single();
+  renderDashboard(existingFB);
+
+  currentPairingId = pairing.id;
+  loadChat();
+
+  // Update step tracker
+  if (pairing.status === 'active' || pairing.status === 'agreed' || pairing.status === 'pending_review' || pairing.status === 'completed') {
+    document.getElementById('step3').querySelector('.sdot').textContent = '✓';
+    document.getElementById('step3').querySelector('.sdot').className = 'sdot done';
+    document.getElementById('step3').className = 'step done';
+    document.getElementById('welcomeSub').textContent = 'Your VA is ready. Check your Pairing tab.';
+    document.getElementById('welcomeBadge').textContent = 'Active pairing';
+    document.getElementById('welcomeBadge').className = 'status-badge badge-active';
+    document.getElementById('statusBadge').textContent = 'Active';
+    document.getElementById('statusBadge').className = 'status-badge badge-active';
+  }
+}
+
+function renderDashboard(existingFB) { renderVAProfile(); renderPairingInfo(); renderStatusBanner(); renderStepTracker(); renderSections(existingFB); }
+
+async function renderVAProfile() {
+  const va = pairing.members;
+  if (!va) return;
+  const displayName = va.full_name || va.email?.split('@')[0] || 'Your VA';
+  const initials = displayName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+
+  let avatarHtml = '';
+  if (va.photo_url) { avatarHtml = `<img src="${va.photo_url}" alt="${displayName}"/>`; }
+  else { avatarHtml = initials; }
+
+  const skillsHtml = (va.skills||[]).map(s=>`<span class="skill-tag">${s}</span>`).join('');
+  const avail = pairing.va_availability;
+  const availHtml = avail ? `
+    <div class="avail-chip">🕐 <strong>${avail.available_hours_per_week||'?'} hrs/week</strong></div>
+    <div class="avail-chip">📅 <strong>${(avail.days_available||[]).join(', ')}</strong></div>
+    <div class="avail-chip">🌏 <strong>${avail.timezone||'Asia/Manila'}</strong></div>` : '';
+
+  const portfolioHtml = va.canva_portfolio_url ? `<a class="portfolio-btn" href="${va.canva_portfolio_url}" target="_blank">📁 View Portfolio →</a>` : '';
+
+  document.getElementById('vaSectionWrap').innerHTML = `
+    <div class="va-hero-card">
+      <div class="va-hero">
+        <div class="va-avatar">${avatarHtml}</div>
+        <div style="flex:1;">
+          <div class="va-name">${displayName}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">${skillsHtml}</div>
+          <div class="va-bio">${va.bio||'This VA\'s profile is being set up.'}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">${availHtml}</div>
+          ${portfolioHtml}
+        </div>
+      </div>
+    </div>`;
+
+  const { data:fbRatings } = await sb.from('client_feedback').select('overall_rating,communication_rating,quality_rating,reliability_rating,would_continue,comments,submitted_at,pairings!inner(member_id)').eq('approved',true).eq('pairings.member_id',va.id);
+  renderVARatings(fbRatings||[]);
+}
+
+function renderVARatings(fbRatings) {
+  if (!fbRatings.length) return;
+  const avg = arr => (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1);
+  const avgOverall = avg(fbRatings.map(r=>r.overall_rating));
+  const stars = n => '⭐'.repeat(Math.max(0,Math.min(5,Math.round(parseFloat(n)))));
+  const commentsHtml = fbRatings.filter(r=>r.comments).slice(0,3).map(r=>`
+    <div style="background:var(--cream-dark);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+      <div style="font-size:12px;color:var(--muted);font-style:italic;line-height:1.6;">"${r.comments}"</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:5px;">${fmtDate(r.submitted_at)}</div>
+    </div>`).join('');
+  const existing = document.getElementById('vaSectionWrap').querySelector('.va-hero-card');
+  if (existing) existing.insertAdjacentHTML('afterend', `
+    <div class="mini-card" style="margin-bottom:14px;">
+      <div class="sec-label">VA ratings from past clients</div>
+      <div style="font-size:28px;font-weight:500;color:var(--coffee);margin-bottom:4px;">${avgOverall} ${stars(avgOverall)}</div>
+      ${commentsHtml}
+    </div>`);
+}
+
+function renderPairingInfo() {
+  document.getElementById('pairingInfoWrap').innerHTML = `
+    <div class="mini-card" style="margin-bottom:14px;">
+      <div class="sec-label">Pairing details</div>
+      <div class="info-grid">
+        <div class="info-item"><div class="info-label">Start date</div><div class="info-val">${fmtDate(pairing.start_date)}</div></div>
+        <div class="info-item"><div class="info-label">End date</div><div class="info-val">${fmtDate(pairing.end_date)}</div></div>
+        <div class="info-item"><div class="info-label">Status</div><div class="info-val" style="text-transform:capitalize;">${pairing.status||'pending'}</div></div>
+        <div class="info-item"><div class="info-label">Tasks selected</div><div class="info-val">${pairingTasks.length}</div></div>
+      </div>
+    </div>`;
+}
+
+function renderStatusBanner() {
+  const s = pairing.status;
+  const configs = {
+    pending:{ cls:'pending', icon:'⏳', title:'Pairing Request Received', sub:'Coach Di is reviewing your request and will set you up soon.' },
+    agreed:{ cls:'agreed', icon:'📋', title:'Terms Agreed — Select Your Tasks', sub:'You\'ve agreed to the terms. Now choose what your VA will work on.' },
+    active:{ cls:'active', icon:'🚀', title:'Pairing Active!', sub:'Your VA is working on your tasks. Check back for updates.' },
+    pending_review:{ cls:'pending_review', icon:'📊', title:'Feedback Pending', sub:'Your 3 weeks are up! Please submit your end-of-term feedback.' },
+    completed:{ cls:'completed', icon:'🎉', title:'Pairing Complete', sub:'This engagement is complete. See your history in Past Pairings.' }
+  };
+  const cfg = configs[s] || configs.pending;
+  document.getElementById('statusBannerWrap').innerHTML = `
+    <div class="status-banner ${cfg.cls}">
+      <div class="banner-icon">${cfg.icon}</div>
+      <div><div class="banner-title">${cfg.title}</div><div class="banner-sub">${cfg.sub}</div></div>
+    </div>`;
+}
+
+function renderStepTracker() {
+  if (!pairing.start_date) return;
+  const start = new Date(pairing.start_date);
+  const now = new Date();
+  const day = Math.max(0, Math.min(21, Math.floor((now - start) / 86400000)));
+  const pct = Math.round((day / 21) * 100);
+  show('progressSection');
+  document.getElementById('progressLabel').textContent = `Day ${day} of 21`;
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function renderSections(existingFB) {
+  const s = pairing.status;
+  if (s === 'pending') { show('termsSection'); showTerms(); }
+  else if (s === 'agreed') { show('termsSection'); show('tasksSection'); showTerms(); buildTaskGrid(); }
+  else if (s === 'active') { show('activeNotice'); renderActiveTaskList(); }
+  else if (s === 'pending_review') { show('activeNotice'); renderActiveTaskList(); show('feedbackSection'); buildTaskCompleteList(); }
+  else if (s === 'completed') {
+    if (existingFB) { show('feedbackSection'); hide('feedbackFormWrap'); show('feedbackAlreadyDone'); }
+    else { show('feedbackSection'); buildTaskCompleteList(); }
+  }
+}
+
+async function showTerms() {
+  // Use terms_text from the pairing itself first, fall back to engagement_terms table
+  const pairingTerms = pairing.terms_text || '';
+  if (pairingTerms) {
+    document.getElementById('termsText').textContent = pairingTerms;
+  } else {
+    const { data:terms } = await sb.from('engagement_terms').select('content').eq('is_active',true).single();
+    if (terms) document.getElementById('termsText').textContent = terms.content;
+  }
+  if (pairing.client_agreed_at) {
+    show('agreedNotice');
+    document.getElementById('agreedDate').textContent = fmtDate(pairing.client_agreed_at);
+  } else { show('agreeRow'); show('agreeBtn'); }
+}
+
+function renderActiveTaskList() {
+  const list = document.getElementById('activeTaskList');
+  if (!pairingTasks.length) { list.innerHTML = '<p style="color:var(--muted);font-size:12px;">No tasks on record.</p>'; return; }
+  list.innerHTML = pairingTasks.map(t => {
+    const name = t.task_categories ? `${t.task_categories.icon} ${t.task_categories.name}` : `📝 ${t.custom_task}`;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);">
+      <span style="color:${t.status==='done'?'var(--green)':'var(--muted)'};">${t.status==='done'?'✅':'⬜'}</span> ${name}
+    </div>`;
+  }).join('');
+}
+
+// TASKS TAB
+async function loadClientTasks() {
+  if (!clientRecord) return;
+  const activePairing = allPairings.find(p=>p.status==='active'||p.status==='agreed');
+  if (!activePairing) {
+    document.getElementById('addTaskFormInner').style.display = 'none';
+    document.getElementById('noActivePairingMsg').style.display = 'block';
+    return;
+  }
+
+  const { data:tasks } = await sb.from('client_tasks').select('*').eq('pairing_id', activePairing.id).order('created_at',{ascending:false});
+  renderClientTasks(tasks||[], activePairing.id);
+}
+
+function renderClientTasks(tasks, pairingId) {
+  const open = tasks.filter(t=>t.status==='open'||t.status==='in_progress').length;
+  const submitted = tasks.filter(t=>t.status==='submitted').length;
+  const completed = tasks.filter(t=>t.status==='completed').length;
+  document.getElementById('totalTasks').textContent = tasks.length;
+  document.getElementById('openTasks').textContent = open;
+  document.getElementById('submittedTasks').textContent = submitted;
+  document.getElementById('completedTasks').textContent = completed;
+
+  if (!tasks.length) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  document.getElementById('clientTasksList').innerHTML = tasks.map(t => {
+    const isOverdue = t.deadline && new Date(t.deadline) < today && t.status !== 'completed';
+    const deadlineClass = isOverdue ? 'deadline-red' : '';
+    const badgeMap = { open:'badge-open', urgent:'badge-urgent', submitted:'badge-submitted', completed:'badge-done', revision:'badge-revision', in_progress:'badge-open' };
+    const badge = t.priority==='urgent' ? 'badge-urgent' : (badgeMap[t.status]||'badge-open');
+    const labelMap = { open:'Open', urgent:'Urgent', submitted:'Submitted', completed:'Completed', revision:'Revision', in_progress:'In progress' };
+    const label = t.priority==='urgent' ? 'Urgent' : (labelMap[t.status]||'Open');
+    const resultHtml = t.status==='submitted' && t.result_text ? `
+      <div class="divider"></div>
+      <div class="result-label">VA result</div>
+      <div class="result-box">${escHtml(t.result_text)}</div>
+      <div class="task-actions">
+        <button class="btn-approve" onclick="markTaskComplete('${t.id}')">Mark complete</button>
+        <button class="btn-revise" onclick="requestRevision('${t.id}')">Request revision</button>
+      </div>` : '';
+    return `
+      <div class="task-card-item" style="${t.priority==='urgent'?'border-color:rgba(163,45,45,.25);':''}">
+        <div class="task-item-head">
+          <div class="task-item-name">${escHtml(t.title)}</div>
+          <span class="task-item-badge ${badge}">${label}</span>
+        </div>
+        ${t.description ? `<div class="task-item-desc">${escHtml(t.description)}</div>` : ''}
+        <div class="task-item-meta">
+          ${t.deadline ? `<div><div class="tm-label">Deadline</div><div class="tm-val ${deadlineClass}">${fmtDate(t.deadline)}</div></div>` : ''}
+          <div><div class="tm-label">Added</div><div class="tm-val">${fmtDate(t.created_at)}</div></div>
+        </div>
+        ${resultHtml}
+      </div>`;
+  }).join('');
+}
+
+async function addNewTask() {
+  const title = document.getElementById('newTaskTitle').value.trim();
+  if (!title) { alert('Please enter a task title.'); return; }
+  const activePairing = allPairings.find(p=>p.status==='active'||p.status==='agreed');
+  if (!activePairing) { alert('No active pairing found.'); return; }
+
+  const { error } = await sb.from('client_tasks').insert({
+    pairing_id: activePairing.id,
+    client_email: clientRecord.email,
+    title: title,
+    description: document.getElementById('newTaskDesc').value.trim() || null,
+    deadline: document.getElementById('newTaskDeadline').value || null,
+    priority: document.getElementById('newTaskPriority').value,
+    status: document.getElementById('newTaskPriority').value === 'urgent' ? 'urgent' : 'open'
+  });
+
+  if (error) { alert('Error adding task.'); return; }
+  document.getElementById('newTaskTitle').value = '';
+  document.getElementById('newTaskDesc').value = '';
+  document.getElementById('newTaskDeadline').value = '';
+  loadClientTasks();
+}
+
+async function markTaskComplete(taskId) {
+  await sb.from('client_tasks').update({ status:'completed' }).eq('id', taskId);
+  loadClientTasks();
+}
+
+async function requestRevision(taskId) {
+  await sb.from('client_tasks').update({ status:'revision' }).eq('id', taskId);
+  loadClientTasks();
+}
+
+// PAST PAIRINGS
+function loadPastPairings(completed) {
+  if (!completed.length) return;
+  document.getElementById('pastPairingsContent').innerHTML = completed.map(p => {
+    const va = p.members;
+    const name = va?.full_name || va?.email?.split('@')[0] || 'VA';
+    const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const skills = (va?.skills||[]).map(s=>`<span class="va-tag">${s}</span>`).join('');
+    return `
+      <div class="past-card">
+        <div class="past-head">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="user-avatar" style="background:var(--coffee-mid);">${initials}</div>
+            <div class="past-name">${name}</div>
+          </div>
+          <span class="past-badge">Completed</span>
+        </div>
+        <div style="margin-bottom:8px;">${skills}</div>
+        <div class="past-meta">
+          <div><div class="pm-label">Period</div><div class="pm-val">${fmtDate(p.start_date)} — ${fmtDate(p.end_date)}</div></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// TESTIMONIALS
+async function loadTestimonials() {
+  const { data } = await sb.from('testimonials').select('*').eq('active',true).eq('type','client').order('created_at',{ascending:false}).catch(()=>({data:null}));
+  const grid = document.getElementById('testimonialsGrid');
+  if (!data || !data.length) return;
+  const sevenDaysAgo = Date.now() - 7*24*60*60*1000;
+  grid.innerHTML = data.map(t => {
+    const isNew = new Date(t.created_at).getTime() > sevenDaysAgo;
+    return `<div class="test-card" onclick="openLightbox('${t.image_url}')">
+      ${isNew ? '<span class="new-badge">New</span>' : ''}
+      <img src="${t.image_url}" alt="Client testimonial" loading="lazy"/>
+      ${t.caption ? `<div class="test-caption">${t.caption}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// CHAT
+async function loadChat() {
+  if (!currentPairingId) return;
+  document.getElementById('chatInputRow').style.display = 'flex';
+  document.getElementById('chatMessages').innerHTML = '<div class="chat-locked" style="color:var(--muted);text-align:center;padding:24px 0;">Loading messages…</div>';
+  const { data } = await sb.from('pairing_messages').select('*').eq('pairing_id',currentPairingId).order('created_at',{ascending:true});
+  const msgDiv = document.getElementById('chatMessages');
+  if (data && data.length) {
+    msgDiv.innerHTML = data.map(m=>renderBubble(m)).join('');
+  } else {
+    msgDiv.innerHTML = '<div class="chat-locked">No messages yet. Say hello to your VA!</div>';
+  }
+  msgDiv.scrollTop = msgDiv.scrollHeight;
+  if (chatChannel) sb.removeChannel(chatChannel);
+  chatChannel = sb.channel('chat:'+currentPairingId).on('postgres_changes',{event:'INSERT',schema:'public',table:'pairing_messages',filter:'pairing_id=eq.'+currentPairingId}, payload => {
+    const md = document.getElementById('chatMessages');
+    const lk = md.querySelector('.chat-locked');
+    if (lk) lk.remove();
+    md.innerHTML += renderBubble(payload.new);
+    md.scrollTop = md.scrollHeight;
+  }).subscribe();
+}
+
+function renderBubble(m) {
+  const isAdmin = m.sender_role==='admin';
+  const isMe = m.sender_email === (clientRecord?.email||'');
+  const cls = isAdmin ? 'admin' : isMe ? 'me' : 'them';
+  const prefix = isAdmin ? 'Coach Di: ' : '';
+  return `<div class="bubble ${cls}">${prefix}${escHtml(m.message)}</div>`;
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg || !currentPairingId) return;
+  input.value = '';
+  await sb.from('pairing_messages').insert({ pairing_id:currentPairingId, sender_role:'client', sender_email:clientRecord.email, message:msg });
+}
+
+// EXISTING TASK FUNCTIONS (PRESERVED)
+function buildTaskGrid() {
+  const grid = document.getElementById('taskGrid');
+  const existingIds = new Set(pairingTasks.filter(t=>t.task_category_id).map(t=>t.task_category_id));
+  taskCategories.forEach(cat => {
+    const sel = existingIds.has(cat.id);
+    if (sel) selectedTaskIds.add(cat.id);
+    const el = document.createElement('div');
+    el.className = 'old-task-card' + (sel?' selected':'');
+    el.dataset.id = cat.id;
+    el.innerHTML = `<div class="task-check"><span class="task-checkmark">✓</span></div><div><div style="font-size:18px;">${cat.icon}</div><div class="task-name">${cat.name}</div><div class="task-desc">${cat.description||''}</div></div>`;
+    el.addEventListener('click',() => { el.classList.toggle('selected'); if(el.classList.contains('selected')) selectedTaskIds.add(cat.id); else selectedTaskIds.delete(cat.id); updateTaskCount(); });
+    grid.appendChild(el);
+  });
+  updateTaskCount();
+}
+function updateTaskCount() { document.getElementById('taskCountBadge').textContent = (selectedTaskIds.size+customTasks.length)+' selected'; }
+function addCustomTask() { const input=document.getElementById('customTaskInput'); const val=input.value.trim(); if(!val) return; customTasks.push(val); input.value=''; renderCustomChips(); updateTaskCount(); }
+function renderCustomChips() { document.getElementById('customTaskChips').innerHTML = customTasks.map((t,i)=>`<div style="display:inline-flex;align-items:center;gap:6px;background:var(--cream-dark);border:1px solid var(--border);border-radius:999px;padding:5px 12px;font-size:12px;color:var(--text);">📝 ${t} <span onclick="removeCustomTask(${i})" style="cursor:pointer;color:var(--muted);">×</span></div>`).join(''); }
+function removeCustomTask(i) { customTasks.splice(i,1); renderCustomChips(); updateTaskCount(); }
+async function saveTasks() {
+  if (!selectedTaskIds.size && !customTasks.length) { alert('Select at least one task.'); return; }
+  const btn=document.getElementById('saveTasksBtn'); btn.disabled=true; btn.textContent='Saving…';
+  await sb.from('pairing_tasks').delete().eq('pairing_id',pairing.id);
+  const rows=[]; selectedTaskIds.forEach(id=>rows.push({pairing_id:pairing.id,task_category_id:id,status:'selected'})); customTasks.forEach(t=>rows.push({pairing_id:pairing.id,custom_task:t,status:'selected'}));
+  await sb.from('pairing_tasks').insert(rows);
+  await sb.from('pairings').update({status:'active',updated_at:new Date().toISOString()}).eq('id',pairing.id);
+  window.location.reload();
+}
+function toggleAgree() { const cb=document.getElementById('agreeCheck'); cb.checked=!cb.checked; document.getElementById('agreeBtn').disabled=!cb.checked; }
+async function submitAgreement() { const btn=document.getElementById('agreeBtn'); btn.disabled=true; btn.textContent='Saving…'; await sb.from('pairings').update({client_agreed_at:new Date().toISOString(),status:'agreed',updated_at:new Date().toISOString()}).eq('id',pairing.id); window.location.reload(); }
+function buildTaskCompleteList() {
+  const list=document.getElementById('taskCompleteList');
+  if (!pairingTasks.length) { list.innerHTML='<p style="color:var(--muted);font-size:13px;">No tasks on record.</p>'; return; }
+  list.innerHTML=''; pairingTasks.forEach(t => { const name=t.task_categories?`${t.task_categories.icon} ${t.task_categories.name}`:`📝 ${t.custom_task}`; taskStatuses[t.id]=null; const el=document.createElement('div'); el.className='task-complete-item'; el.innerHTML=`<div class="task-complete-name">${name}</div><div class="status-btns"><button class="status-btn done" onclick="setTaskStatus('${t.id}','done',this)">✔ Done</button><button class="status-btn not" onclick="setTaskStatus('${t.id}','not',this)">✘ Not Done</button></div>`; list.appendChild(el); });
+}
+function setTaskStatus(id,status,btn) { taskStatuses[id]=status; btn.parentElement.querySelectorAll('.status-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+function setRating(el) { const key=el.dataset.key; const clicked=event.target.closest('.star'); if(!clicked) return; const val=parseInt(clicked.dataset.val); ratings[key]=val; el.querySelectorAll('.star').forEach(s=>s.classList.toggle('active',parseInt(s.dataset.val)<=val)); const labels=['','😞 Poor','😐 Fair','🙂 Good','😊 Great','🤩 Excellent']; const rvEl=document.getElementById('rv-'+key); if(rvEl) rvEl.textContent=labels[val]||''; }
+function setYesNo(val,btn) { continueAnswer=val; btn.parentElement.querySelectorAll('.yesno-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+async function submitFeedback() {
+  if (!ratings.overall) return alert('Please rate your overall experience.');
+  if (!ratings.communication) return alert('Please rate communication.');
+  if (!ratings.quality) return alert('Please rate quality of work.');
+  if (!ratings.reliability) return alert('Please rate reliability.');
+  if (continueAnswer===null) return alert('Please answer if you would continue.');
+  const allMarked=pairingTasks.every(t=>taskStatuses[t.id]); if (!allMarked && pairingTasks.length) return alert('Please mark all tasks as Done or Not Done.');
+  const btn=document.getElementById('submitFeedbackBtn'); btn.disabled=true; btn.textContent='Submitting…';
+  const { error } = await sb.from('client_feedback').insert({ pairing_id:pairing.id, overall_rating:ratings.overall, communication_rating:ratings.communication, quality_rating:ratings.quality, reliability_rating:ratings.reliability, would_continue:continueAnswer, comments:document.getElementById('feedbackComments').value.trim()||null, approved:false, visible_to_va:false });
+  if (error) { alert('Error submitting feedback.'); btn.disabled=false; btn.textContent='Submit My Feedback 🚀'; return; }
+  for (const [taskId,status] of Object.entries(taskStatuses)) { if(status) await sb.from('pairing_tasks').update({status:status==='done'?'done':'not_done',marked_done_at:status==='done'?new Date().toISOString():null}).eq('id',taskId); }
+  await sb.from('pairings').update({status:'completed',updated_at:new Date().toISOString()}).eq('id',pairing.id);
+  hide('feedbackFormWrap'); show('feedbackAlreadyDone');
+}
+
+// UI HELPERS
+function switchTab(name, el) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab, .mobile-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  el.classList.add('active');
+  // sync desktop/mobile tab states
+  document.querySelectorAll('.tab, .mobile-tab').forEach(t => { if(t.getAttribute('onclick')&&t.getAttribute('onclick').includes("'"+name+"'")) t.classList.add('active'); });
+}
+function toggleMobileNav() { document.getElementById('mobileNav').classList.toggle('open'); }
+function openLightbox(url) { document.getElementById('lightboxImg').src=url; document.getElementById('lightbox').classList.add('open'); }
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+function copyReferral() { navigator.clipboard.writeText('https://donebydimarketing.github.io/va-newbies-portal/client-signup.html').then(()=>alert('Referral link copied!')); }
+function show(id) { document.getElementById(id)?.classList.remove('hidden'); }
+function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
+function fmtDate(d) { if(!d) return '—'; return new Date(d).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}); }
+function escHtml(str) { if(!str) return ''; return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+async function doLogout() { await sb.auth.signOut(); window.location.href='client-signup.html'; }
+</script>
+</body>
+</html>
