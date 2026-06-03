@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VA Newbies PH — Client Sign Up</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #07070f;
+    --surface: #0f0f1a;
+    --surface2: #161625;
+    --border: #252538;
+    --accent: #7c5cfc;
+    --accent2: #c05cfc;
+    --gold: #f0b429;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #e8e8f0;
+    --muted: #5a5a78;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(124,92,252,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .brand {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .logo-pill {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 7px 18px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+    letter-spacing: 0.5px;
+  }
+  .brand h1 { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+  .brand p { color: var(--muted); font-size: 14px; }
+
+  /* STEP INDICATOR */
+  .step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 28px;
+  }
+  .step-dot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .step-circle {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+  .step-circle.active {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: white;
+  }
+  .step-circle.done {
+    border-color: var(--green);
+    background: var(--green);
+    color: white;
+  }
+  .step-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .step-label.active { color: var(--accent); }
+  .step-label.done { color: var(--green); }
+  .step-line {
+    width: 48px;
+    height: 2px;
+    background: var(--border);
+    margin: 0 6px;
+    margin-bottom: 18px;
+    transition: background 0.3s;
+  }
+  .step-line.done { background: var(--green); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+    width: 100%;
+    max-width: 520px;
+  }
+
+  /* Company info card wider */
+  .card.wide { max-width: 640px; }
+
+  /* TABS */
+  .tab-row {
+    display: flex;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 28px;
+    gap: 4px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 9px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .section-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .section-sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+
+  /* COMPANY INFO SECTIONS */
+  .info-section {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    background: var(--surface2);
+  }
+  .info-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .info-section-icon {
+    font-size: 18px;
+  }
+  .info-section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .info-section-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .badge-req {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(239,68,68,0.12);
+    color: var(--red);
+    border: 1px solid rgba(239,68,68,0.25);
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .badge-opt {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .form-group { margin-bottom: 14px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .req-star { color: var(--red); margin-left: 2px; }
+  .form-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--muted); }
+  textarea.form-input { resize: vertical; min-height: 72px; line-height: 1.5; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .social-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .field-sublabel {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    margin-top: -8px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    border-radius: 9px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 12px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  .alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.5;
+  }
+  .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: var(--green); }
+  .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--red); }
+  .alert-info { background: rgba(124,92,252,0.1); border: 1px solid rgba(124,92,252,0.3); color: #a08cfc; }
+
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--muted); font-size: 12px; margin: 20px 0;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .footer-note {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 24px;
+    line-height: 1.6;
+  }
+  .footer-note a { color: var(--accent); text-decoration: none; }
+
+  /* SUCCESS */
+  .success-view {
+    text-align: center;
+    padding: 20px 0;
+  }
+  .success-icon { font-size: 56px; margin-bottom: 16px; }
+  .success-view h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .success-view p { color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .success-detail {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 20px;
+    text-align: left;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .success-detail strong { color: var(--text); }
+
+  .password-wrap { position: relative; }
+  .password-toggle {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 4px;
+  }
+
+  .privacy-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 12px;
+    margin-bottom: 4px;
+  }
+
+  @media (max-width: 480px) {
+    .form-row, .form-row-3, .social-row { grid-template-columns: 1fr; }
+    .card { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <div class="logo-pill">VA Newbies PH</div>
+  <h1>Client Portal Access</h1>
+  <p>Sign up to connect with your dedicated Virtual Assistant</p>
+</div>
+
+<!-- STEP INDICATOR (only shown during signup steps) -->
+<div class="step-indicator" id="stepIndicator" style="display:none">
+  <div class="step-dot">
+    <div class="step-circle active" id="stepCircle1">1</div>
+    <div class="step-label active" id="stepLabel1">Your account</div>
+  </div>
+  <div class="step-line" id="stepLine1"></div>
+  <div class="step-dot">
+    <div class="step-circle" id="stepCircle2">2</div>
+    <div class="step-label" id="stepLabel2">Company info</div>
+  </div>
+</div>
+
+<div class="card" id="mainCard">
+
+  <!-- SUCCESS: email confirm -->
+  <div id="signupSuccess" class="success-view" style="display:none">
+    <div class="success-icon">🎉</div>
+    <h2>You're all set!</h2>
+    <p>Your company info has been submitted. Coach Di will review it and reach out shortly.</p>
+    <div class="success-detail">
+      <strong>What happens next:</strong><br>
+      ✅ Check your inbox — a welcome email with the host client handbook is on its way to <strong id="confirmedEmail"></strong>.<br><br>
+      ⏳ Coach Di will review your company info before matching you with a VA.<br><br>
+      📬 You'll hear from us within 1–2 business days once your pairing is ready.
+    </div>
+  </div>
+
+  <!-- SUCCESS: login -->
+  <div id="loginSuccess" class="success-view" style="display:none">
+    <div class="success-icon">✅</div>
+    <h2>Welcome back!</h2>
+    <p>Redirecting you to your dashboard…</p>
+  </div>
+
+  <div id="formContainer">
+    <div class="tab-row" id="authTabs">
+      <button class="tab-btn active" onclick="switchTab('signup', this)">Create Account</button>
+      <button class="tab-btn" onclick="switchTab('login', this)">Log In</button>
+    </div>
+
+    <!-- ======== STEP 1: ACCOUNT CREATION ======== -->
+    <div class="tab-content active" id="tab-signup">
+      <div class="section-title">Create your account</div>
+      <div class="section-sub">Step 1 of 2 — You'll use this to access your VA pairing and submit feedback.</div>
+
+      <div id="signupAlert"></div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name <span class="req-star">*</span></label>
+          <input type="text" class="form-input" id="signupFirst" placeholder="Maria">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name <span class="req-star">*</span></label>
+          <input type="text" class="form-input" id="signupLast" placeholder="Santos">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email Address <span class="req-star">*</span></label>
+        <input type="email" class="form-input" id="signupEmail" placeholder="maria@example.com">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password <span class="req-star">*</span></label>
+        <div class="password-wrap">
+          <input type="password" class="form-input" id="signupPassword" placeholder="At least 8 characters">
+          <button type="button" class="password-toggle" onclick="togglePw('signupPassword', this)">👁</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Confirm Password <span class="req-star">*</span></label>
+        <div class="password-wrap">
+          <input type="password" class="form-input" id="signupConfirm" placeholder="Repeat password">
+          <button type="button" class="password-toggle" onclick="togglePw('signupConfirm', this)">👁</button>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="doSignup()" id="signupBtn">Continue to Company Info →</button>
+
+      <div class="footer-note" style="margin-top:16px">
+        By signing up you agree to the VA Newbies PH engagement terms.<br>
+        Already have an account? <a href="#" onclick="switchTabByName('login')">Log in here</a>
+      </div>
+    </div>
+
+    <!-- ======== STEP 2: COMPANY INFO ======== -->
+    <div id="step2Container" style="display:none">
+      <div class="section-title">Tell us about your business</div>
+      <div class="section-sub">Step 2 of 2 — Coach Di reviews this before matching you with a VA.</div>
+
+      <div id="companyAlert"></div>
+
+      <!-- Section 1: Business basics -->
+      <div class="info-section">
+        <div class="info-section-header">
+          <div class="info-section-icon">🏢</div>
+          <div>
+            <div class="info-section-title">Business basics <span class="badge-req">Required</span></div>
+            <div class="info-section-subtitle">Core info about your company</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Business / Brand Name <span class="req-star">*</span></label>
+            <input type="text" class="form-input" id="ciBusinessName" placeholder="e.g. Bloom Creative Studio">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Legal Business Name</label>
+            <input type="text" class="form-input" id="ciLegalName" placeholder="If different from brand name">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Industry / Niche <span class="req-star">*</span></label>
+            <select class="form-input" id="ciIndustry">
+              <option value="">Select industry</option>
+              <option>Coaching & Consulting</option>
+              <option>Health & Wellness</option>
+              <option>E-commerce / Retail</option>
+              <option>Real Estate</option>
+              <option>Finance & Accounting</option>
+              <option>Marketing & Creative Agency</option>
+              <option>Tech / SaaS</option>
+              <option>Education & Online Courses</option>
+              <option>Legal Services</option>
+              <option>Non-profit / Advocacy</option>
+              <option>Trades & Local Services</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Business Type <span class="req-star">*</span></label>
+            <select class="form-input" id="ciBusinessType">
+              <option value="">Select type</option>
+              <option>Solopreneur</option>
+              <option>Small Business (2–10 people)</option>
+              <option>Mid-size Business (11–50)</option>
+              <option>Agency</option>
+              <option>Non-profit</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Country <span class="req-star">*</span></label>
+            <select class="form-input" id="ciCountry">
+              <option value="">Select country</option>
+              <option>United States</option>
+              <option>United Kingdom</option>
+              <option>Canada</option>
+              <option>Australia</option>
+              <option>New Zealand</option>
+              <option>Singapore</option>
+              <option>United Arab Emirates</option>
+              <option>Switzerland</option>
+              <option>Germany</option>
+              <option>France</option>
+              <option>Netherlands</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Time Zone <span class="req-star">*</span></label>
+            <select class="form-input" id="ciTimezone">
+              <option value="">Select time zone</option>
+              <option>UTC-12 (Baker Island)</option>
+              <option>UTC-11 (American Samoa)</option>
+              <option>UTC-10 (Hawaii)</option>
+              <option>UTC-8 (Pacific Time)</option>
+              <option>UTC-7 (Mountain Time)</option>
+              <option>UTC-6 (Central Time)</option>
+              <option>UTC-5 (Eastern Time)</option>
+              <option>UTC-4 (Atlantic Time)</option>
+              <option>UTC-3 (Brazil)</option>
+              <option>UTC+0 (UK / GMT)</option>
+              <option>UTC+1 (Central Europe)</option>
+              <option>UTC+2 (Eastern Europe)</option>
+              <option>UTC+3 (Gulf)</option>
+              <option>UTC+4 (UAE)</option>
+              <option>UTC+5:30 (India)</option>
+              <option>UTC+7 (Southeast Asia)</option>
+              <option>UTC+8 (Singapore / Philippines / HK)</option>
+              <option>UTC+9 (Japan / Korea)</option>
+              <option>UTC+10 (Australia East)</option>
+              <option>UTC+12 (New Zealand)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">What does your business do? <span class="req-star">*</span></label>
+          <textarea class="form-input" id="ciDescription" placeholder="In 2–3 sentences: what you sell, who you serve, and how you deliver it."></textarea>
+        </div>
+      </div>
+
+      <!-- Section 2: Online presence -->
+      <div class="info-section">
+        <div class="info-section-header">
+          <div class="info-section-icon">🌐</div>
+          <div>
+            <div class="info-section-title">Online presence <span class="badge-opt">Optional but helpful</span></div>
+            <div class="info-section-subtitle">So your VA knows where to find and represent you</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Website URL</label>
+            <input type="url" class="form-input" id="ciWebsite" placeholder="https://yourbusiness.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Primary Business Email</label>
+            <input type="email" class="form-input" id="ciBusinessEmail" placeholder="hello@yourbusiness.com">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="margin-bottom:10px">Social Media Accounts</label>
+          <div class="social-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Facebook</label>
+              <input type="url" class="form-input" id="ciFacebook" placeholder="Page or profile URL">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Instagram</label>
+              <input type="text" class="form-input" id="ciInstagram" placeholder="@handle">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">LinkedIn</label>
+              <input type="url" class="form-input" id="ciLinkedin" placeholder="Profile or page URL">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">TikTok</label>
+              <input type="text" class="form-input" id="ciTiktok" placeholder="@handle">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">YouTube</label>
+              <input type="url" class="form-input" id="ciYoutube" placeholder="Channel URL">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Other Platform</label>
+              <input type="text" class="form-input" id="ciOtherSocial" placeholder="Pinterest, X, etc.">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Work style -->
+      <div class="info-section">
+        <div class="info-section-header">
+          <div class="info-section-icon">⚙️</div>
+          <div>
+            <div class="info-section-title">Work style & expectations <span class="badge-req">Required</span></div>
+            <div class="info-section-subtitle">Helps us match you with the right VA</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Preferred Communication Tool <span class="req-star">*</span></label>
+            <select class="form-input" id="ciCommsTools">
+              <option value="">Select preferred tool</option>
+              <option>WhatsApp</option>
+              <option>Slack</option>
+              <option>Email</option>
+              <option>Telegram</option>
+              <option>Viber</option>
+              <option>Microsoft Teams</option>
+              <option>Mixed / No preference</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Expected VA Response Time <span class="req-star">*</span></label>
+            <select class="form-input" id="ciResponseTime">
+              <option value="">Select expectation</option>
+              <option>Same day (within business hours)</option>
+              <option>Within 24 hours</option>
+              <option>Within 48 hours</option>
+              <option>Flexible — no strict deadline</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tools Your Team Uses</label>
+          <input type="text" class="form-input" id="ciToolsUsed" placeholder="e.g. Notion, Trello, Canva, Google Drive, Asana…">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">How Do You Prefer to Give Instructions? <span class="req-star">*</span></label>
+          <select class="form-input" id="ciInstructionStyle">
+            <option value="">Select style</option>
+            <option>Written (text / docs)</option>
+            <option>Voice notes</option>
+            <option>Video walkthroughs (Loom, etc.)</option>
+            <option>Mix of written + voice</option>
+            <option>Live calls / meetings</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Anything Your VA Must Know Before Starting?</label>
+          <textarea class="form-input" id="ciVaMustKnow" placeholder="Brand voice, pet peeves, how you like things done, non-negotiables, preferred tone…"></textarea>
+        </div>
+      </div>
+
+      <!-- Section 4: Goals -->
+      <div class="info-section">
+        <div class="info-section-header">
+          <div class="info-section-icon">🎯</div>
+          <div>
+            <div class="info-section-title">Goals for this pairing <span class="badge-req">Required</span></div>
+            <div class="info-section-subtitle">What would make this 21 days a win for you?</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Main Area You Need Help With <span class="req-star">*</span></label>
+          <select class="form-input" id="ciHelpArea">
+            <option value="">Select main area</option>
+            <option>Admin & scheduling</option>
+            <option>Email & inbox management</option>
+            <option>Social media management</option>
+            <option>Content creation & writing</option>
+            <option>Research & data entry</option>
+            <option>Canva / graphic design support</option>
+            <option>Customer service & support</option>
+            <option>Project coordination</option>
+            <option>Multiple areas / General VA support</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">What Does Success Look Like at the End of 21 Days? <span class="req-star">*</span></label>
+          <textarea class="form-input" id="ciSuccessDefinition" placeholder='e.g. "My inbox is managed, weekly reports are sent on time, and I get back 10 hours a week."'></textarea>
+        </div>
+      </div>
+
+      <div class="privacy-note">
+        🔒 Only Coach Di can see your answers. Your VA will receive a brief summary once matched.
+      </div>
+
+      <div id="companyAlert2"></div>
+
+      <button class="btn-primary" onclick="submitCompanyInfo()" id="companyBtn">Submit & Complete Sign Up →</button>
+      <button class="btn-secondary" onclick="skipCompanyInfo()" id="skipBtn">Skip for now — I'll fill this in later</button>
+
+    </div>
+
+    <!-- LOGIN TAB -->
+    <div class="tab-content" id="tab-login">
+      <div class="section-title">Welcome back</div>
+      <div class="section-sub">Log in to view your VA pairing and dashboard.</div>
+
+      <div id="loginAlert"></div>
+
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" class="form-input" id="loginEmail" placeholder="maria@example.com">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="password-wrap">
+          <input type="password" class="form-input" id="loginPassword" placeholder="Your password">
+          <button type="button" class="password-toggle" onclick="togglePw('loginPassword', this)">👁</button>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="doLogin()" id="loginBtn">Log In to My Dashboard →</button>
+
+      <div class="divider">or</div>
+
+      <button class="btn-primary" style="background: var(--surface2); border: 1px solid var(--border); color: var(--muted);" onclick="doMagicLink()">
+        ✉️ Send me a magic link instead
+      </button>
+
+      <div class="footer-note">
+        Forgot password? Use the magic link above.<br>
+        Don't have an account? <a href="#" onclick="switchTabByName('signup')">Sign up here</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL = 'https://mbcwgtrliiocqcgwbfnu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iY3dndHJsaWlvY3FjZ3diZm51Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NDQwMzMsImV4cCI6MjA5MTUyMDAzM30.bs3bm6PEK82hr2T9NPs6lQ6jlgolL6wE-TDblXDEMVE';
+const DASHBOARD_URL = 'client-dashboard.html';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { redirectTo: window.location.origin + '/va-newbies-portal/' + DASHBOARD_URL }
+});
+
+let pendingUserId = null;
+let pendingEmail = null;
+
+// Check if already logged in
+sb.auth.getSession().then(({ data: { session } }) => {
+  if (session) window.location.href = DASHBOARD_URL;
+});
+
+// Handle email confirmation redirect
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    linkClientRecord(session.user);
+    window.location.href = DASHBOARD_URL;
+  }
+});
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  // Hide step indicator when on login tab
+  document.getElementById('stepIndicator').style.display = tab === 'signup' ? 'flex' : 'none';
+}
+function switchTabByName(tab) {
+  const btn = document.querySelector(`.tab-btn:${tab === 'login' ? 'last-child' : 'first-child'}`);
+  switchTab(tab, btn);
+}
+
+// ============================================================
+// STEP INDICATOR
+// ============================================================
+function showStepIndicator() {
+  document.getElementById('stepIndicator').style.display = 'flex';
+}
+function goToStep2UI() {
+  // Update step indicator
+  document.getElementById('stepCircle1').className = 'step-circle done';
+  document.getElementById('stepCircle1').textContent = '✓';
+  document.getElementById('stepLabel1').className = 'step-label done';
+  document.getElementById('stepLine1').className = 'step-line done';
+  document.getElementById('stepCircle2').className = 'step-circle active';
+  document.getElementById('stepLabel2').className = 'step-label active';
+  // Widen card
+  document.getElementById('mainCard').classList.add('wide');
+  // Show step 2
+  document.getElementById('authTabs').style.display = 'none';
+  document.getElementById('tab-signup').style.display = 'none';
+  document.getElementById('step2Container').style.display = 'block';
+}
+
+// ============================================================
+// STEP 1: SIGN UP
+// ============================================================
+async function doSignup() {
+  const first = document.getElementById('signupFirst').value.trim();
+  const last = document.getElementById('signupLast').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const pw = document.getElementById('signupPassword').value;
+  const confirm = document.getElementById('signupConfirm').value;
+
+  if (!first || !last || !email || !pw) return setAlert('signupAlert', 'error', 'Please fill in all required fields.');
+  if (pw !== confirm) return setAlert('signupAlert', 'error', 'Passwords do not match.');
+  if (pw.length < 8) return setAlert('signupAlert', 'error', 'Password must be at least 8 characters.');
+
+  const btn = document.getElementById('signupBtn');
+  btn.disabled = true; btn.textContent = 'Creating account…';
+
+  const fullName = `${first} ${last}`;
+
+  const { data, error } = await sb.auth.signUp({
+    email,
+    password: pw,
+    options: {
+      data: { full_name: fullName, role: 'client' },
+      emailRedirectTo: window.location.origin + '/va-newbies-portal/' + DASHBOARD_URL
+    }
+  });
+
+  if (error) {
+    setAlert('signupAlert', 'error', error.message);
+    btn.disabled = false; btn.textContent = 'Continue to Company Info →';
+    return;
+  }
+
+  // Create initial client record
+  if (data.user) {
+    await sb.from('clients').upsert({
+      auth_user_id: data.user.id,
+      full_name: fullName,
+      email,
+      company_info_status: 'pending_info',
+      signed_up_at: new Date().toISOString()
+    }, { onConflict: 'auth_user_id' });
+
+    pendingUserId = data.user.id;
+    pendingEmail = email;
+  }
+
+  // Move to step 2
+  showStepIndicator();
+  goToStep2UI();
+}
+
+// ============================================================
+// STEP 2: COMPANY INFO SUBMIT
+// ============================================================
+async function submitCompanyInfo() {
+  // Validate required fields
+  const required = [
+    { id: 'ciBusinessName', label: 'Business / Brand Name' },
+    { id: 'ciIndustry', label: 'Industry / Niche' },
+    { id: 'ciBusinessType', label: 'Business Type' },
+    { id: 'ciCountry', label: 'Country' },
+    { id: 'ciTimezone', label: 'Time Zone' },
+    { id: 'ciDescription', label: 'Business description' },
+    { id: 'ciCommsTools', label: 'Preferred Communication Tool' },
+    { id: 'ciResponseTime', label: 'Expected VA Response Time' },
+    { id: 'ciInstructionStyle', label: 'How you prefer to give instructions' },
+    { id: 'ciHelpArea', label: 'Main area you need help with' },
+    { id: 'ciSuccessDefinition', label: 'What success looks like' },
+  ];
+
+  for (const field of required) {
+    if (!document.getElementById(field.id).value.trim()) {
+      setAlert('companyAlert2', 'error', `Please fill in: ${field.label}`);
+      document.getElementById(field.id).focus();
+      document.getElementById(field.id).scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+  }
+
+  const btn = document.getElementById('companyBtn');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  document.getElementById('skipBtn').style.display = 'none';
+
+  const socials = {
+    facebook: document.getElementById('ciFacebook').value.trim(),
+    instagram: document.getElementById('ciInstagram').value.trim(),
+    linkedin: document.getElementById('ciLinkedin').value.trim(),
+    tiktok: document.getElementById('ciTiktok').value.trim(),
+    youtube: document.getElementById('ciYoutube').value.trim(),
+    other: document.getElementById('ciOtherSocial').value.trim(),
+  };
+  // Remove empty social entries
+  Object.keys(socials).forEach(k => { if (!socials[k]) delete socials[k]; });
+
+  const companyData = {
+    business_name: document.getElementById('ciBusinessName').value.trim(),
+    legal_name: document.getElementById('ciLegalName').value.trim() || null,
+    industry: document.getElementById('ciIndustry').value,
+    business_type: document.getElementById('ciBusinessType').value,
+    country: document.getElementById('ciCountry').value,
+    timezone: document.getElementById('ciTimezone').value,
+    business_description: document.getElementById('ciDescription').value.trim(),
+    website: document.getElementById('ciWebsite').value.trim() || null,
+    business_email: document.getElementById('ciBusinessEmail').value.trim() || null,
+    socials: Object.keys(socials).length ? socials : null,
+    preferred_comms: document.getElementById('ciCommsTools').value,
+    response_time_expectation: document.getElementById('ciResponseTime').value,
+    tools_used: document.getElementById('ciToolsUsed').value.trim() || null,
+    instruction_style: document.getElementById('ciInstructionStyle').value,
+    va_must_know: document.getElementById('ciVaMustKnow').value.trim() || null,
+    main_help_area: document.getElementById('ciHelpArea').value,
+    success_definition: document.getElementById('ciSuccessDefinition').value.trim(),
+    company_info_status: 'pending_review',
+    company_info_submitted_at: new Date().toISOString(),
+  };
+
+  // Save to clients table
+  let updateError = null;
+  if (pendingUserId) {
+    const { error } = await sb.from('clients')
+      .update(companyData)
+      .eq('auth_user_id', pendingUserId);
+    updateError = error;
+  }
+
+  if (updateError) {
+    setAlert('companyAlert2', 'error', 'Something went wrong saving your info. Please try again.');
+    btn.disabled = false; btn.textContent = 'Submit & Complete Sign Up →';
+    document.getElementById('skipBtn').style.display = 'block';
+    return;
+  }
+
+  // Fire welcome email via Edge Function
+  try {
+    await sb.functions.invoke('send-email', {
+      body: {
+        type: 'welcome_client',
+        client_email: pendingEmail,
+        client_name: document.getElementById('ciBusinessName').value.trim() || pendingEmail,
+      }
+    });
+  } catch (e) {
+    // Email failure is non-blocking — record is saved, continue
+    console.warn('Welcome email failed:', e);
+  }
+
+  // Show success
+  showSuccessScreen();
+}
+
+async function skipCompanyInfo() {
+  // Mark as pending_info so it still shows in admin
+  if (pendingUserId) {
+    await sb.from('clients').update({
+      company_info_status: 'pending_info'
+    }).eq('auth_user_id', pendingUserId);
+  }
+
+  // Still send welcome email
+  try {
+    await sb.functions.invoke('send-email', {
+      body: {
+        type: 'welcome_client',
+        client_email: pendingEmail,
+        client_name: pendingEmail,
+      }
+    });
+  } catch (e) {
+    console.warn('Welcome email failed:', e);
+  }
+
+  showSuccessScreen();
+}
+
+function showSuccessScreen() {
+  document.getElementById('confirmedEmail').textContent = pendingEmail || 'your inbox';
+  document.getElementById('stepIndicator').style.display = 'none';
+  document.getElementById('formContainer').style.display = 'none';
+  document.getElementById('step2Container').style.display = 'none';
+  document.getElementById('signupSuccess').style.display = 'block';
+  document.getElementById('mainCard').classList.remove('wide');
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw = document.getElementById('loginPassword').value;
+
+  if (!email || !pw) return setAlert('loginAlert', 'error', 'Please enter your email and password.');
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = 'Logging in…';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+
+  if (error) {
+    setAlert('loginAlert', 'error', error.message);
+    btn.disabled = false; btn.textContent = 'Log In to My Dashboard →';
+    return;
+  }
+
+  await sb.from('clients').update({ last_login: new Date().toISOString() }).eq('auth_user_id', data.user.id);
+
+  document.getElementById('formContainer').style.display = 'none';
+  document.getElementById('loginSuccess').style.display = 'block';
+  setTimeout(() => window.location.href = DASHBOARD_URL, 1200);
+}
+
+// ============================================================
+// MAGIC LINK
+// ============================================================
+async function doMagicLink() {
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) return setAlert('loginAlert', 'error', 'Enter your email first, then click magic link.');
+
+  const { error } = await sb.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.origin + '/va-newbies-portal/' + DASHBOARD_URL }
+  });
+
+  if (error) return setAlert('loginAlert', 'error', error.message);
+  setAlert('loginAlert', 'success', '✅ Magic link sent! Check your email inbox.');
+}
+
+// ============================================================
+// LINK CLIENT RECORD (on email confirm redirect)
+// ============================================================
+async function linkClientRecord(user) {
+  await sb.from('clients').upsert({
+    auth_user_id: user.id,
+    email: user.email,
+    full_name: user.user_metadata?.full_name || '',
+    signed_up_at: new Date().toISOString()
+  }, { onConflict: 'auth_user_id' });
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function setAlert(id, type, msg) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+}
+
+function togglePw(inputId, btn) {
+  const input = document.getElementById(inputId);
+  input.type = input.type === 'password' ? 'text' : 'password';
+  btn.textContent = input.type === 'password' ? '👁' : '🙈';
+}
+
+// Show step indicator on load if on signup tab
+showStepIndicator();
+</script>
+</body>
+</html>
