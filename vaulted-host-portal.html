@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Vaulted VA — Host Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --coffee:#3B2314;--coffee-mid:#6B4226;--coffee-light:#C4956A;
+  --cream:#F7F1EB;--cream-dark:#EDE4D8;--white:#fff;
+  --text:#2C1810;--muted:#8B6B55;--border:#D9C5B2;--bg:#F7F1EB;--card:#fff;
+  --green:#1B9A64;--red:#A32D2D;--orange:#B46414;
+  --gold:#C4956A;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);min-height:100vh;}
+
+/* TOPBAR */
+.topbar{background:var(--coffee);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.logo{font-size:13px;font-weight:700;color:var(--cream);letter-spacing:.08em;}
+.logo-sub{font-size:10px;color:rgba(247,241,235,.45);letter-spacing:.06em;margin-left:4px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--coffee-light);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0;}
+.user-name{font-size:13px;color:var(--cream);}
+.logout-btn{background:none;border:1px solid rgba(255,255,255,.15);color:rgba(247,241,235,.6);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;}
+.vaulted-badge{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(196,149,106,.2);color:var(--coffee-light);border:1px solid rgba(196,149,106,.3);}
+
+/* TABS */
+.tabs{background:var(--coffee);display:flex;border-bottom:1px solid rgba(255,255,255,.08);padding:0 20px;overflow-x:auto;position:sticky;top:56px;z-index:99;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:11px 14px;font-size:12px;font-weight:500;color:rgba(247,241,235,.45);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;}
+.tab.active{color:var(--cream);border-bottom-color:var(--coffee-light);}
+.tab:hover{color:var(--cream);}
+
+/* CONTENT */
+.content{max-width:820px;margin:0 auto;padding:20px;}
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* WELCOME BAR */
+.welcome-bar{background:var(--coffee);border-radius:12px;padding:18px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+.welcome-bar h2{font-size:18px;font-weight:500;color:#fff;margin-bottom:4px;}
+.welcome-bar h2 span{color:var(--coffee-light);}
+.welcome-bar p{font-size:12px;color:rgba(247,241,235,.55);line-height:1.6;}
+
+/* STAT CARDS */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.stat-val{font-size:20px;font-weight:500;color:var(--coffee);}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* SECTION LABELS */
+.sec-label{font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;}
+
+/* MINI CARDS */
+.mini-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;}
+.mc-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.mc-body{font-size:12px;color:var(--muted);line-height:1.6;}
+
+/* STEP TRACKER */
+.steps-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:14px;}
+.steps-row{display:flex;}
+.step{flex:1;text-align:center;position:relative;}
+.step:not(:last-child)::after{content:'';position:absolute;top:12px;left:50%;width:100%;height:1px;background:var(--border);z-index:0;}
+.step.done::after{background:var(--coffee-mid);}
+.sdot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;margin:0 auto 5px;position:relative;z-index:1;}
+.sdot.done{background:var(--coffee-mid);color:#fff;}
+.sdot.active{background:var(--coffee-light);color:#fff;}
+.sdot.future{background:var(--cream-dark);color:var(--muted);border:1px solid var(--border);}
+.slabel{font-size:9px;color:var(--muted);}
+
+/* VA CARDS GRID */
+.va-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:14px;}
+.va-hero-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+.va-hero-card.lead{border-color:var(--coffee-light);}
+.va-avatar{width:48px;height:48px;border-radius:50%;background:var(--coffee-mid);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;flex-shrink:0;overflow:hidden;}
+.va-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.va-name{font-size:14px;font-weight:500;color:var(--text);}
+.va-card-role{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;margin-top:3px;}
+.va-card-role.lead{background:rgba(196,149,106,.15);color:var(--coffee-mid);border:1px solid rgba(196,149,106,.3);}
+.va-card-role.trainee{background:var(--cream-dark);color:var(--muted);border:1px solid var(--border);}
+.va-status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-left:auto;flex-shrink:0;}
+.va-status-dot.active{background:var(--green);}
+.va-status-dot.pending,.va-status-dot.agreed{background:var(--gold);}
+.skill-tag{font-size:11px;background:var(--cream-dark);color:var(--muted);padding:3px 8px;border-radius:6px;display:inline-block;margin:3px 3px 0 0;}
+.va-bio{font-size:12px;color:var(--muted);line-height:1.6;margin:8px 0;}
+.avail-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);background:var(--cream-dark);padding:3px 8px;border-radius:6px;margin:3px 3px 0 0;}
+.portfolio-btn{display:inline-flex;align-items:center;gap:6px;background:var(--cream-dark);border:1px solid var(--border);border-radius:8px;padding:7px 14px;color:var(--coffee-mid);font-size:12px;font-weight:500;text-decoration:none;margin-top:8px;}
+.email-va-btn{display:inline-flex;align-items:center;gap:6px;background:var(--cream-dark);border:1px solid var(--border);border-radius:8px;padding:7px 14px;color:var(--coffee-mid);font-size:12px;font-weight:500;cursor:pointer;margin-top:8px;}
+.date-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;}
+.date-box{background:var(--cream-dark);border-radius:6px;padding:7px 9px;}
+.date-box-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+.date-box-val{font-size:12px;font-weight:500;color:var(--text);}
+
+/* DOCUMENTS */
+.doc-row{display:flex;align-items:center;gap:12px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;}
+.doc-icon{width:36px;height:36px;border-radius:8px;background:var(--cream-dark);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.doc-name{font-size:13px;font-weight:500;color:var(--text);}
+.doc-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.doc-badge{margin-left:auto;font-size:10px;font-weight:600;padding:3px 10px;border-radius:999px;background:rgba(27,154,100,.1);color:var(--green);border:1px solid rgba(27,154,100,.2);white-space:nowrap;}
+
+/* FEEDBACK */
+.fb-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
+.fb-va-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.fb-title{font-size:14px;font-weight:500;color:var(--text);}
+.fb-sub{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+.rating-group{margin-bottom:14px;}
+.rating-label{font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.rating-hint{font-size:11px;color:var(--muted);margin-bottom:6px;}
+.stars{display:flex;gap:4px;cursor:pointer;width:fit-content;}
+.star{font-size:20px;opacity:.25;transition:opacity .15s;}
+.star.lit{opacity:1;}
+.fb-field-label{font-size:12px;font-weight:500;color:var(--text);margin-bottom:5px;margin-top:14px;}
+.fb-textarea{width:100%;background:var(--cream-dark);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--text);font-family:inherit;resize:vertical;min-height:64px;outline:none;}
+.fb-textarea:focus{border-color:var(--coffee-light);}
+.fb-textarea::placeholder{color:var(--muted);}
+.fb-submit-btn{width:100%;margin-top:14px;padding:11px;background:var(--coffee-mid);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+.fb-submit-btn:hover{opacity:.9;}
+.fb-submit-btn:disabled{opacity:.5;cursor:default;}
+.fb-done{text-align:center;padding:24px 0;}
+.fb-done-icon{font-size:32px;margin-bottom:8px;}
+.fb-done-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.fb-done-sub{font-size:12px;color:var(--muted);}
+
+/* BILLING */
+.billing-table{width:100%;border-collapse:collapse;}
+.billing-table th{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;background:var(--cream-dark);}
+.billing-table td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text);}
+.billing-table td:last-child{text-align:right;font-weight:500;}
+.billing-table tr:last-child td{border-bottom:none;}
+.billing-note{margin-top:10px;padding:12px 14px;background:var(--cream-dark);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted);line-height:1.6;}
+
+/* NEWS ROWS (shared with VANPH) */
+.news-row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);}
+.news-row:last-child{border-bottom:none;padding-bottom:0;}
+.news-num{font-size:18px;font-weight:500;color:var(--coffee-mid);min-width:52px;}
+.nt{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.ns{font-size:11px;color:var(--muted);}
+
+/* TESTIMONIALS */
+.testimonials-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.test-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;position:relative;}
+.test-card img{width:100%;height:auto;display:block;}
+.test-caption{padding:8px 10px;font-size:11px;color:var(--muted);}
+.test-empty{font-size:13px;color:var(--muted);padding:24px;text-align:center;}
+.new-badge{position:absolute;top:8px;right:8px;background:var(--coffee-mid);color:#fff;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;}
+
+/* LOADING / ALERTS */
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px;gap:12px;}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--coffee-mid);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.alert{padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:12px;}
+.alert-info{background:rgba(107,66,38,.08);border:1px solid rgba(107,66,38,.2);color:var(--coffee-mid);}
+.alert-error{background:rgba(163,45,45,.08);border:1px solid rgba(163,45,45,.2);color:var(--red);}
+
+/* DIVIDER */
+hr{border:none;border-top:1px solid var(--border);margin:14px 0;}
+
+/* MOBILE */
+@media(max-width:600px){
+  .grid4{grid-template-columns:1fr 1fr;}
+  .va-cards-grid{grid-template-columns:1fr;}
+  .testimonials-grid{grid-template-columns:1fr;}
+  .content{padding:14px;}
+  .user-name{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="loadingScreen" class="loading" style="min-height:100vh;">
+  <div class="spinner"></div>
+  <p style="font-size:13px;color:var(--muted);">Loading your portal...</p>
+</div>
+
+<div id="portalWrap" style="display:none;">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo">VAULTED VA</div>
+      <span class="logo-sub">by VA Newbies International</span>
+    </div>
+    <div class="topbar-right">
+      <span class="vaulted-badge">Premium</span>
+      <div class="user-avatar" id="topAvatar">?</div>
+      <span class="user-name" id="topName"></span>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('overview',this)">Overview</button>
+    <button class="tab" onclick="switchTab('team',this)">My VA Team</button>
+    <button class="tab" onclick="switchTab('documents',this)">Documents</button>
+    <button class="tab" onclick="switchTab('feedback',this)">Feedback</button>
+    <button class="tab" onclick="switchTab('billing',this)">Billing</button>
+    <button class="tab" onclick="switchTab('tips',this)">Tips &amp; News</button>
+  </div>
+
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="panel active" id="tab-overview">
+      <div class="welcome-bar">
+        <div>
+          <h2>Welcome, <span id="welcomeName">Host</span></h2>
+          <p id="welcomeSub">Your Vaulted VA placement is active. Here is your current status.</p>
+        </div>
+        <span class="vaulted-badge" style="font-size:11px;padding:4px 12px;" id="overviewStatusBadge">Active</span>
+      </div>
+      <div class="grid4" id="statTiles"></div>
+      <div class="steps-wrap">
+        <div class="sec-label">Placement timeline</div>
+        <div class="steps-row">
+          <div class="step done"><div class="sdot done">✓</div><div class="slabel">Agreements</div></div>
+          <div class="step done"><div class="sdot done">✓</div><div class="slabel">Team Intro</div></div>
+          <div class="step active"><div class="sdot active" id="trialDot">3</div><div class="slabel">21-Day Trial</div></div>
+          <div class="step future"><div class="sdot future" id="feedbackDot">4</div><div class="slabel">Feedback</div></div>
+          <div class="step future"><div class="sdot future">5</div><div class="slabel">Continue / Close</div></div>
+        </div>
+      </div>
+      <div class="mini-card">
+        <div class="mc-title">Your coordinator</div>
+        <div class="mc-body" style="margin-top:6px;display:flex;align-items:center;gap:10px;">
+          <div class="user-avatar" style="background:var(--coffee-mid);width:36px;height:36px;font-size:13px;">D</div>
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text);">Deanne Tabios</div>
+            <div style="font-size:11px;color:var(--muted);">Founder, VA Newbies International</div>
+            <div style="font-size:11px;color:var(--coffee-mid);margin-top:2px;">
+              <a href="mailto:hello@vanewbiesinternational.com" style="color:var(--coffee-mid);text-decoration:none;">hello@vanewbiesinternational.com</a>
+              &nbsp;·&nbsp;WhatsApp: +1 (928) 258-2204
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MY VA TEAM -->
+    <div class="panel" id="tab-team">
+      <div class="sec-label" style="margin-bottom:14px;">Your placed VAs</div>
+      <div id="vaCardsGrid" class="va-cards-grid"></div>
+      <div id="vaCardsEmpty" style="display:none;" class="mini-card">
+        <div class="mc-title">No active VAs yet</div>
+        <div class="mc-body">Your VA team will appear here once your placement is confirmed. Contact Deanne if you have questions.</div>
+      </div>
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div class="panel" id="tab-documents">
+      <div class="sec-label" style="margin-bottom:14px;">Your signed agreements</div>
+      <div class="doc-row">
+        <div class="doc-icon">📄</div>
+        <div><div class="doc-name">Host Client Agreement</div><div class="doc-sub">Terms between you and Vaulted VA</div></div>
+        <div class="doc-badge">On file</div>
+      </div>
+      <div class="doc-row">
+        <div class="doc-icon">📄</div>
+        <div><div class="doc-name">VA Placement Terms</div><div class="doc-sub">Signed by your VA team</div></div>
+        <div class="doc-badge">On file</div>
+      </div>
+      <div class="doc-row">
+        <div class="doc-icon">📄</div>
+        <div><div class="doc-name">Scope of Work</div><div class="doc-sub">Your placement brief and deliverables</div></div>
+        <div class="doc-badge">On file</div>
+      </div>
+      <div class="doc-row">
+        <div class="doc-icon">📋</div>
+        <div><div class="doc-name">Finder's Fee Terms</div><div class="doc-sub">Applies on permanent hire of any VA</div></div>
+        <div class="doc-badge">On file</div>
+      </div>
+      <div class="mini-card" style="margin-top:6px;">
+        <div class="mc-body">Need a copy of any document? Email <a href="mailto:hello@vanewbiesinternational.com" style="color:var(--coffee-mid);">hello@vanewbiesinternational.com</a> and Deanne will send it within 24 hours.</div>
+      </div>
+    </div>
+
+    <!-- FEEDBACK -->
+    <div class="panel" id="tab-feedback">
+      <div class="sec-label" style="margin-bottom:14px;">End-of-term feedback</div>
+      <div id="feedbackFormsWrap"></div>
+      <div id="feedbackNotReady" style="display:none;" class="mini-card">
+        <div class="mc-title">Not yet</div>
+        <div class="mc-body">Feedback opens at the end of your 21-day trial. You will see a form here for each VA on your team once the period closes.</div>
+      </div>
+    </div>
+
+    <!-- BILLING -->
+    <div class="panel" id="tab-billing">
+      <div class="sec-label" style="margin-bottom:14px;">Placement fees</div>
+      <div class="mini-card" style="padding:0;overflow:hidden;">
+        <table class="billing-table">
+          <thead><tr><th>Item</th><th>Amount</th></tr></thead>
+          <tbody>
+            <tr><td>21-day trial placement</td><td>As per contract</td></tr>
+            <tr><td>Month 1 -- 50% deposit</td><td>Due before start</td></tr>
+            <tr><td>Month 1 -- balance + coordination fee</td><td>Due at 30 days</td></tr>
+            <tr><td>Month 2+ direct payments</td><td style="color:var(--muted);font-weight:400;">Arranged directly with VA</td></tr>
+            <tr><td>Finder's fee (on permanent hire)</td><td>$500 USD per VA</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="billing-note">
+        Finder's fee is due upon notification of permanent hire. An invoice will be provided. Payment due within 7 days of issuance. Accepted payment methods will be noted on the invoice.
+      </div>
+    </div>
+
+    <!-- TIPS & NEWS (shared Supabase tables with VANPH) -->
+    <div class="panel" id="tab-tips">
+      <div class="sec-label" style="margin-bottom:14px;">Tips for working with your VA team</div>
+      <div class="mini-card" style="margin-bottom:14px;">
+        <div class="news-row"><div class="news-num">01</div><div><div class="nt">Direct all primary tasks to your Lead VA</div><div class="ns">Your Lead VA manages the team. They will delegate to Trainees and ensure quality.</div></div></div>
+        <div class="news-row"><div class="news-num">02</div><div><div class="nt">Give written instructions, not voice notes</div><div class="ns">Written briefs are easier for your VA to track, reference, and act on precisely.</div></div></div>
+        <div class="news-row"><div class="news-num">03</div><div><div class="nt">Respond within 24 hours</div><div class="ns">Delayed approvals stall your team and reduce output quality.</div></div></div>
+        <div class="news-row"><div class="news-num">04</div><div><div class="nt">The 15-hour limit applies to the team collectively</div><div class="ns">Plan your task volume accordingly. If you need more, speak to Deanne.</div></div></div>
+      </div>
+      <div class="sec-label" style="margin-bottom:14px;">Client testimonials</div>
+      <div class="testimonials-grid" id="testimonialsGrid">
+        <div class="test-empty" style="grid-column:1/-1;">Testimonials coming soon.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;display:none;align-items:center;justify-content:center;padding:20px;" onclick="closeLightbox()">
+  <img id="lightboxImg" src="" alt="Testimonial" style="max-width:90%;max-height:90vh;border-radius:8px;"/>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://mbcwgtrliiocqcgwbfnu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iY3dndHJsaWlvY3FjZ3diZm51Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NDQwMzMsImV4cCI6MjA5MTUyMDAzM30.bs3bm6PEK82hr2T9NPs6lQ6jlgolL6wE-TDblXDEMVE';
+const BASE_URL = 'https://donebydimarketing.github.io/va-newbies-portal';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let clientRecord = null;
+let allPairings = [];
+const fbState = {};
+
+window.addEventListener('DOMContentLoaded', init);
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    // No session -- redirect back to client dashboard login
+    window.location.href = `${BASE_URL}/client-dashboard.html`;
+    return;
+  }
+  await loadPortal(session.user);
+}
+
+async function loadPortal(user) {
+  // Fetch client record
+  const { data: clientRows } = await sb.from('clients').select('*').eq('auth_user_id', user.id).limit(1);
+  clientRecord = clientRows?.[0] || { auth_user_id: user.id, email: user.email, full_name: user.user_metadata?.full_name || user.email };
+
+  const name = clientRecord.full_name || user.email;
+  const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('topAvatar').textContent = initials;
+  document.getElementById('topName').textContent = name;
+  document.getElementById('welcomeName').textContent = name.split(' ')[0];
+
+  // Fetch pairings
+  const { data: pairingRows } = await sb.from('pairings')
+    .select('*, members(id,full_name,email,tier,bio,skills,canva_portfolio_url,photo_url)')
+    .eq('client_id', clientRecord.id)
+    .not('status', 'eq', 'cancelled')
+    .order('created_at', { ascending: false });
+
+  allPairings = pairingRows || [];
+
+  // Fetch VA availability
+  const activePairings = allPairings.filter(p => p.status !== 'completed' && p.status !== 'cancelled');
+  const vaIds = activePairings.map(p => p.members?.id).filter(Boolean);
+  if (vaIds.length) {
+    const { data: availRows } = await sb.from('va_availability').select('*').in('member_id', vaIds);
+    activePairings.forEach(p => { p.va_availability = (availRows||[]).find(a => a.member_id === p.members?.id) || null; });
+  }
+
+  renderStats(activePairings);
+  renderVACards(activePairings);
+  renderFeedbackForms(allPairings);
+  loadTestimonials();
+
+  document.getElementById('loadingScreen').style.display = 'none';
+  document.getElementById('portalWrap').style.display = 'block';
+}
+
+// ── STATS ──────────────────────────────────────────────────────────────────
+function renderStats(pairings) {
+  const active = pairings.find(p => p.status === 'active' || p.status === 'agreed');
+  const daysActive = active?.start_date ? Math.floor((Date.now() - new Date(active.start_date)) / 86400000) : 0;
+  const daysLeft = active?.end_date ? Math.max(0, Math.ceil((new Date(active.end_date) - Date.now()) / 86400000)) : 0;
+  const status = active?.status || (allPairings.length ? allPairings[0].status : 'pending');
+
+  document.getElementById('statTiles').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Days Active</div><div class="stat-val">${daysActive}</div></div>
+    <div class="stat-card"><div class="stat-label">Days Remaining</div><div class="stat-val" style="color:var(--green);">${daysLeft}</div></div>
+    <div class="stat-card"><div class="stat-label">VA Team Size</div><div class="stat-val">${pairings.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Status</div><div class="stat-val" style="font-size:14px;text-transform:capitalize;">${statusLabel(status)}</div></div>`;
+
+  document.getElementById('overviewStatusBadge').textContent = statusLabel(status);
+  if (active?.end_date) {
+    document.getElementById('welcomeSub').textContent = `Your trial runs through ${fmtDate(active.end_date)}. ${daysLeft} days remaining.`;
+  }
+}
+
+// ── VA CARDS ───────────────────────────────────────────────────────────────
+function renderVACards(pairings) {
+  const grid = document.getElementById('vaCardsGrid');
+  const empty = document.getElementById('vaCardsEmpty');
+  if (!pairings.length) { grid.style.display = 'none'; empty.style.display = 'block'; return; }
+  grid.style.display = 'grid'; empty.style.display = 'none';
+
+  grid.innerHTML = pairings.map((p, i) => {
+    const va = p.members;
+    if (!va) return '';
+    const displayName = va.full_name || va.email?.split('@')[0] || 'Your VA';
+    const initials = displayName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const avatarHtml = va.photo_url
+      ? `<img src="${va.photo_url}" alt="${displayName}"/>`
+      : initials;
+    const isLead = pairings.length > 1 && i === 0;
+    const roleTag = pairings.length > 1
+      ? `<span class="va-card-role ${isLead ? 'lead' : 'trainee'}">${isLead ? '★ Lead VA' : 'Trainee'}</span>`
+      : '';
+    const skillsHtml = (va.skills||[]).slice(0,4).map(s=>`<span class="skill-tag">${s}</span>`).join('');
+    const avail = p.va_availability;
+    const hoursHtml = avail ? `<span class="avail-chip">🕐 ${avail.available_hours_per_week||'?'} hrs/wk</span>` : '';
+    const portfolioHtml = va.canva_portfolio_url ? `<a class="portfolio-btn" href="${va.canva_portfolio_url}" target="_blank">📁 Portfolio →</a>` : '';
+    const emailHtml = va.email ? `<button class="email-va-btn" onclick="emailVA('${va.email}','${(va.full_name||'').replace(/'/g,"\\'")}')">📧 Email ${displayName.split(' ')[0]}</button>` : '';
+    const statusDot = `<span class="va-status-dot ${p.status}" style="margin-left:auto;"></span>`;
+
+    return `<div class="va-hero-card ${isLead ? 'lead' : ''}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div class="va-avatar">${avatarHtml}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:4px;">${statusDot}</div>
+          <div class="va-name">${displayName}</div>
+          ${roleTag}
+        </div>
+      </div>
+      <div style="margin-bottom:6px;">${skillsHtml}</div>
+      <div class="va-bio">${va.bio||'Profile being set up by Deanne.'}</div>
+      <div>${hoursHtml}</div>
+      ${portfolioHtml}
+      ${emailHtml}
+      <div class="date-row">
+        <div class="date-box"><div class="date-box-label">Start</div><div class="date-box-val">${fmtDate(p.start_date)}</div></div>
+        <div class="date-box"><div class="date-box-label">End</div><div class="date-box-val">${fmtDate(p.end_date)}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── FEEDBACK FORMS ─────────────────────────────────────────────────────────
+async function renderFeedbackForms(pairings) {
+  const wrap = document.getElementById('feedbackFormsWrap');
+  const notReady = document.getElementById('feedbackNotReady');
+  const needFeedback = pairings.filter(p => p.status === 'pending_review' || p.status === 'completed');
+
+  if (!needFeedback.length) {
+    wrap.style.display = 'none';
+    notReady.style.display = 'block';
+    return;
+  }
+  notReady.style.display = 'none';
+  wrap.style.display = 'block';
+
+  const pIds = needFeedback.map(p => p.id);
+  const { data: existingFBs } = await sb.from('client_feedback').select('id,pairing_id,approved').in('pairing_id', pIds);
+  const fbMap = {};
+  (existingFBs||[]).forEach(fb => { fbMap[fb.pairing_id] = fb; });
+
+  const { data: allTasks } = await sb.from('pairing_tasks').select('*, task_categories(name,icon)').in('pairing_id', pIds);
+  const tasksMap = {};
+  (allTasks||[]).forEach(t => { if (!tasksMap[t.pairing_id]) tasksMap[t.pairing_id] = []; tasksMap[t.pairing_id].push(t); });
+
+  wrap.innerHTML = '';
+
+  needFeedback.forEach((p, idx) => {
+    const va = p.members;
+    const vaName = va?.full_name || 'Your VA';
+    const pid = p.id;
+    const isLead = needFeedback.length > 1 && idx === 0;
+    const roleTag = needFeedback.length > 1
+      ? `<span style="font-size:10px;padding:2px 8px;border-radius:999px;margin-left:6px;${isLead ? 'background:rgba(196,149,106,.15);color:var(--coffee-mid);border:1px solid rgba(196,149,106,.3);' : 'background:var(--cream-dark);color:var(--muted);border:1px solid var(--border);'}font-weight:700;">${isLead ? '★ Lead' : 'Trainee'}</span>`
+      : '';
+
+    fbState[pid] = { ratings: { overall:0, communication:0, quality:0, reliability:0 }, whatWorks: '', whatNeeds: '' };
+
+    const existingFB = fbMap[pid];
+    const tasks = tasksMap[pid] || [];
+
+    const taskRowsHtml = tasks.map(t => {
+      const label = t.task_categories ? `${t.task_categories.icon} ${t.task_categories.name}` : `📝 ${t.custom_task}`;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--cream-dark);border:1px solid var(--border);border-radius:7px;margin-bottom:5px;font-size:12px;">
+        <span>${label}</span>
+        <div style="display:flex;gap:5px;">
+          <button id="fbTaskDone_${pid}_${t.id}" onclick="markFBTask('${pid}','${t.id}','done')" style="padding:3px 9px;border-radius:5px;border:1px solid var(--border);background:var(--card);font-size:11px;cursor:pointer;font-family:inherit;">✔ Done</button>
+          <button id="fbTaskNot_${pid}_${t.id}" onclick="markFBTask('${pid}','${t.id}','not_done')" style="padding:3px 9px;border-radius:5px;border:1px solid var(--border);background:var(--card);font-size:11px;cursor:pointer;font-family:inherit;">✘ Not Done</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    const ratingKeys = ['overall','communication','quality','reliability'];
+    const ratingLabels = { overall:'Overall Experience', communication:'Communication', quality:'Quality of Work', reliability:'Reliability' };
+    const ratingHints = { overall:'How was working with this VA overall?', communication:'Did they communicate clearly and on time?', quality:'Were the outputs good?', reliability:'Did they meet deadlines?' };
+
+    const formHtml = existingFB
+      ? `<div class="fb-done"><div class="fb-done-icon">🎉</div><div class="fb-done-title">Feedback submitted</div><div class="fb-done-sub">Your review for ${vaName} is with Deanne for approval.</div></div>`
+      : `<div id="fbFormInner_${pid}">
+          ${tasks.length ? `<div style="font-size:12px;font-weight:500;margin-bottom:8px;color:var(--text);">📋 Mark each task:</div>${taskRowsHtml}<hr>` : ''}
+          ${ratingKeys.map(key => `
+            <div class="rating-group">
+              <div class="rating-label">${ratingLabels[key]}</div>
+              <div class="rating-hint">${ratingHints[key]}</div>
+              <div class="stars" id="stars_${key}_${pid}" data-pid="${pid}" data-key="${key}" onclick="setRatingFor(event,'${pid}','${key}')">
+                ${[1,2,3,4,5].map(v=>`<span class="star" data-val="${v}">⭐</span>`).join('')}
+              </div>
+            </div>`).join('')}
+          <hr>
+          <div class="fb-field-label">What worked best with ${vaName.split(' ')[0]}?</div>
+          <textarea class="fb-textarea" id="fbWhatWorks_${pid}" placeholder="What was the best part of working with this VA?"></textarea>
+          <div class="fb-field-label">What needs improvement?</div>
+          <textarea class="fb-textarea" id="fbWhatNeeds_${pid}" placeholder="What could they do better next time?"></textarea>
+          <button class="fb-submit-btn" id="fbSubmitBtn_${pid}" onclick="submitFeedbackFor('${pid}')">Submit feedback for ${vaName.split(' ')[0]} 🚀</button>
+        </div>`;
+
+    const card = document.createElement('div');
+    card.className = 'fb-card';
+    card.innerHTML = `
+      <div class="fb-va-head">
+        <div class="va-avatar" style="width:32px;height:32px;font-size:11px;">${(vaName).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+        <span class="fb-title">Feedback for ${vaName}</span>${roleTag}
+      </div>
+      <div class="fb-sub">Rate your experience with this VA for this placement period.</div>
+      ${formHtml}`;
+    wrap.appendChild(card);
+  });
+}
+
+function setRatingFor(e, pid, key) {
+  const star = e.target.closest('.star');
+  if (!star) return;
+  const val = parseInt(star.dataset.val);
+  fbState[pid].ratings[key] = val;
+  const container = document.getElementById(`stars_${key}_${pid}`);
+  container.querySelectorAll('.star').forEach((s,i) => s.classList.toggle('lit', i < val));
+}
+
+function markFBTask(pid, taskId, status) {
+  if (!fbState[pid].taskStatuses) fbState[pid].taskStatuses = {};
+  fbState[pid].taskStatuses[taskId] = status;
+  const doneBtn = document.getElementById(`fbTaskDone_${pid}_${taskId}`);
+  const notBtn = document.getElementById(`fbTaskNot_${pid}_${taskId}`);
+  doneBtn.style.cssText = status === 'done' ? 'padding:3px 9px;border-radius:5px;border:1px solid var(--green);background:rgba(27,154,100,.1);color:var(--green);font-size:11px;cursor:pointer;font-family:inherit;' : 'padding:3px 9px;border-radius:5px;border:1px solid var(--border);background:var(--card);font-size:11px;cursor:pointer;font-family:inherit;';
+  notBtn.style.cssText = status === 'not_done' ? 'padding:3px 9px;border-radius:5px;border:1px solid var(--red);background:rgba(163,45,45,.08);color:var(--red);font-size:11px;cursor:pointer;font-family:inherit;' : 'padding:3px 9px;border-radius:5px;border:1px solid var(--border);background:var(--card);font-size:11px;cursor:pointer;font-family:inherit;';
+}
+
+async function submitFeedbackFor(pid) {
+  const state = fbState[pid];
+  const { overall, communication, quality, reliability } = state.ratings;
+  if (!overall) return alert('Please rate Overall Experience.');
+  if (!communication) return alert('Please rate Communication.');
+  if (!quality) return alert('Please rate Quality of Work.');
+  if (!reliability) return alert('Please rate Reliability.');
+
+  const btn = document.getElementById(`fbSubmitBtn_${pid}`);
+  btn.disabled = true; btn.textContent = 'Submitting...';
+
+  const whatWorks = document.getElementById(`fbWhatWorks_${pid}`)?.value.trim() || null;
+  const whatNeeds = document.getElementById(`fbWhatNeeds_${pid}`)?.value.trim() || null;
+  const commentsText = [whatWorks ? `BEST: ${whatWorks}` : null, whatNeeds ? `IMPROVE: ${whatNeeds}` : null].filter(Boolean).join('\n\n') || null;
+
+  const { error } = await sb.from('client_feedback').insert({
+    pairing_id: pid,
+    overall_rating: overall,
+    communication_rating: communication,
+    quality_rating: quality,
+    reliability_rating: reliability,
+    would_continue: null,
+    comments: commentsText,
+    approved: false,
+    visible_to_va: false
+  });
+
+  if (error) { alert('Error: ' + error.message); btn.disabled = false; btn.textContent = 'Submit 🚀'; return; }
+
+  const taskStatuses = state.taskStatuses || {};
+  for (const [taskId, status] of Object.entries(taskStatuses)) {
+    await sb.from('pairing_tasks').update({ status, marked_done_at: status === 'done' ? new Date().toISOString() : null }).eq('id', taskId);
+  }
+  await sb.from('pairings').update({ status: 'completed', updated_at: new Date().toISOString() }).eq('id', pid);
+
+  const vaName = allPairings.find(p => p.id === pid)?.members?.full_name || 'Your VA';
+  document.getElementById(`fbFormInner_${pid}`).innerHTML = `<div class="fb-done"><div class="fb-done-icon">🎉</div><div class="fb-done-title">Feedback submitted</div><div class="fb-done-sub">Your review for ${vaName} is with Deanne for approval.</div></div>`;
+}
+
+// ── TESTIMONIALS ───────────────────────────────────────────────────────────
+async function loadTestimonials() {
+  const { data } = await sb.from('testimonials').select('*').eq('active', true).eq('type', 'client').order('created_at', { ascending: false }).catch(() => ({ data: null }));
+  const grid = document.getElementById('testimonialsGrid');
+  if (!data?.length) return;
+  const sevenDaysAgo = Date.now() - 7*24*60*60*1000;
+  grid.innerHTML = data.map(t => {
+    const isNew = new Date(t.created_at).getTime() > sevenDaysAgo;
+    return `<div class="test-card" onclick="openLightbox('${t.image_url}')">
+      ${isNew ? '<span class="new-badge">New</span>' : ''}
+      <img src="${t.image_url}" alt="Testimonial" loading="lazy"/>
+      ${t.caption ? `<div class="test-caption">${t.caption}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+function emailVA(email, name) {
+  if (!email) { alert('VA email not available yet.'); return; }
+  const firstName = (name||'there').split(' ')[0];
+  const subject = encodeURIComponent('Hello from your host client!');
+  const body = encodeURIComponent(`Hi ${firstName},\n\nLooking forward to working with you!\n\nBest,`);
+  window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+}
+
+function openLightbox(url) {
+  const lb = document.getElementById('lightbox');
+  document.getElementById('lightboxImg').src = url;
+  lb.style.display = 'flex';
+}
+function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
+
+async function doLogout() { await sb.auth.signOut(); window.location.href = `${BASE_URL}/client-dashboard.html`; }
+
+function fmtDate(d) { if (!d) return '--'; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+function statusLabel(s) { const m = { pending:'Pending', agreed:'Agreed', active:'Active', pending_review:'Review Due', completed:'Completed' }; return m[s] || s; }
+</script>
+</body>
+</html>
