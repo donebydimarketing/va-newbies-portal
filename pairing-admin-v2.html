@@ -516,8 +516,23 @@ window.addEventListener('DOMContentLoaded', loadAll);
 
 async function loadAll() {
   await Promise.all([loadPairings(), loadClients(), loadMembers(), loadFeedbackQueue(), loadApprovedFeedback(), loadVARatings(), loadClientRatings()]);
+  await autoExpirePairings();
   updateStats();
   await autoNotifyPendingReview();
+}
+
+async function autoExpirePairings() {
+  // Any pairing past its end date that's still 'active' or 'agreed' moves to pending_review automatically
+  const today = new Date().toISOString().split('T')[0];
+  const expired = allPairings.filter(p =>
+    p.end_date && p.end_date < today &&
+    ['active','agreed'].includes(p.status)
+  );
+  if (!expired.length) return;
+  for (const p of expired) {
+    await sb.from('pairings').update({ status: 'pending_review', updated_at: new Date().toISOString() }).eq('id', p.id);
+    p.status = 'pending_review'; // update in-memory so the rest of loadAll reflects it without a re-fetch
+  }
 }
 
 async function autoNotifyPendingReview() {
@@ -1077,24 +1092,7 @@ function editPairingStatus(pairingId, currentStatus) {
 async function saveEditStatus() {
   const id = document.getElementById('editStatusId').value;
   const status = document.getElementById('editStatusSelect').value;
-
-  const updatePayload = { status, updated_at: new Date().toISOString() };
-
-  // When a pairing becomes "agreed", the 3-week clock starts today.
-  // Only set dates if they aren't already correctly populated, so we
-  // never overwrite a pairing that already has accurate start/end dates.
-  if (status === 'agreed') {
-    const { data: existing } = await sb.from('pairings').select('start_date,end_date').eq('id', id).single();
-    if (!existing?.start_date || !existing?.end_date) {
-      const startDate = existing?.start_date || new Date().toISOString().split('T')[0];
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + 21);
-      updatePayload.start_date = startDate;
-      updatePayload.end_date = endDate.toISOString().split('T')[0];
-    }
-  }
-
-  const { error } = await sb.from('pairings').update(updatePayload).eq('id', id);
+  const { error } = await sb.from('pairings').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
   if (error) { alert('Error: ' + error.message); return; }
   closeModal('editStatusModal');
   closeModal('detailModal');
@@ -1132,7 +1130,6 @@ async function createPairing() {
     client_id: clientId,
     member_id: memberId,
     start_date: startDate,
-    end_date: endDateStr,
     terms_text: terms,
     admin_notes: notes || null,
     status: initialStatus,
