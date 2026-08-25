@@ -376,7 +376,10 @@
       <div class="section-header">
         <h2>All Members</h2>
         <div style="display:flex;gap:8px;align-items:center;">
-          <input class="search-input" type="text" placeholder="Search name or email..." oninput="filterMembers(this.value)" />
+          <input id="member-search-input" class="search-input" type="text" placeholder="Search name or email..." oninput="filterMembers(this.value)" />
+          <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;white-space:nowrap;">
+            <input type="checkbox" id="show-expired-toggle" onchange="toggleShowExpired(this.checked)"/> Show expired
+          </label>
           <button class="btn btn-ghost" onclick="loadMembers()" style="white-space:nowrap;">🔄 Refresh</button>
           <button class="btn btn-teal" onclick="openAddMemberModal()" style="white-space:nowrap;">+ Add Member</button>
         </div>
@@ -1878,11 +1881,46 @@ function renderSparkSubmissions() {
 }
 
 // ─── MEMBERS ─────────────────────────────────
+let showExpiredMembers = false;
+
+// Flips any 'active' member whose access_end has passed to 'expired'.
+// Runs on every load so the dashboard self-corrects without manual cleanup.
+async function autoExpireMembers(members) {
+  const today = new Date().toISOString().split('T')[0];
+  const toExpire = members.filter(m =>
+    m.status === 'active' &&
+    m.access_end &&
+    m.access_end.split('T')[0] < today
+  );
+  if (!toExpire.length) return;
+  for (const m of toExpire) {
+    const { error } = await sb.from('members').update({ status: 'expired' }).eq('id', m.id);
+    if (!error) m.status = 'expired'; // reflect in-memory so render is correct without a re-fetch
+  }
+}
+
+// Applies the search query and the Show Expired toggle together.
+function getVisibleMembers(q) {
+  q = (q || '').toLowerCase();
+  return allMembers.filter(m => {
+    if (!showExpiredMembers && m.status === 'expired') return false;
+    if (q && !(m.full_name || '').toLowerCase().includes(q) && !(m.email || '').toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function toggleShowExpired(checked) {
+  showExpiredMembers = checked;
+  const q = document.getElementById('member-search-input')?.value || '';
+  renderMembers(getVisibleMembers(q));
+}
+
 async function loadMembers() {
   const { data, error } = await sb.from('members').select('*').order('created_at', { ascending: false });
   if (error) { console.error(error); return; }
   allMembers = data || [];
-  renderMembers(allMembers);
+  await autoExpireMembers(allMembers);
+  renderMembers(getVisibleMembers(document.getElementById('member-search-input')?.value || ''));
   updateStats(allMembers);
 }
 
@@ -1941,11 +1979,7 @@ function renderMembers(members) {
 }
 
 function filterMembers(q) {
-  const filtered = allMembers.filter(m =>
-    (m.full_name || '').toLowerCase().includes(q.toLowerCase()) ||
-    (m.email     || '').toLowerCase().includes(q.toLowerCase())
-  );
-  renderMembers(filtered);
+  renderMembers(getVisibleMembers(q));
 }
 
 function openMemberModal(m) {
