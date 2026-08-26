@@ -295,6 +295,13 @@
   .photo-upload-wrap:hover { border-color: var(--coffee-light); }
   .photo-preview { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; display: none; margin: 0 auto 8px; }
 
+  /* SPARK SUBMISSION DETAIL MODAL */
+  .ss-cell-btn { background: none; border: none; cursor: pointer; padding: 2px; font: inherit; color: inherit; }
+  .ss-cell-btn:hover { text-decoration: underline; }
+  .ss-detail-meta { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .ss-detail-content { background: var(--cream-dark); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; margin-top: 10px; }
+  .ss-detail-link { display: inline-block; margin-top: 10px; background: var(--yellow); color: #000; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; }
+
   /* MOBILE */
   @media(max-width:640px) {
     .topbar { padding: 10px 14px; }
@@ -582,7 +589,7 @@
         </div>
       </div>
       <p style="font-size:13px;color:var(--muted);margin-bottom:18px">
-        One row per Spark member, one column per active Spark video. ✅ = submitted (with date), — = not submitted yet.
+        One row per Spark member, one column per active Spark video. Click any ✅ to open the full submission.
       </p>
       <div style="overflow-x:auto;">
         <table id="spark-sub-table">
@@ -592,6 +599,21 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- SPARK SUBMISSION DETAIL MODAL -->
+<div class="modal-overlay" id="spark-sub-detail-modal">
+  <div class="modal" style="width:560px;">
+    <h2 id="ss-detail-title">Submission</h2>
+    <div class="ss-detail-meta"><strong id="ss-detail-member">—</strong></div>
+    <div class="ss-detail-meta" id="ss-detail-video">—</div>
+    <div class="ss-detail-meta" id="ss-detail-date">—</div>
+    <div class="ss-detail-content" id="ss-detail-content">—</div>
+    <a href="#" id="ss-detail-link" class="ss-detail-link" target="_blank" style="display:none;">Open link ↗</a>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('spark-sub-detail-modal')">Close</button>
+    </div>
   </div>
 </div>
 
@@ -1832,6 +1854,35 @@ async function loadSparkSubmissions() {
   renderSparkSubmissions();
 }
 
+// Opens a modal showing the full text/link a Spark member submitted for one video.
+// Pulled up by clicking a ✅ cell in the Spark Submission Tracker.
+function openSparkSubDetail(memberId, videoId) {
+  const { members, videos, subMap } = sparkSubTrackerData;
+  const member = members.find(m => m.id === memberId);
+  const video  = videos.find(v => v.id === videoId);
+  const sub    = subMap[`${memberId}:${videoId}`];
+  if (!sub) return;
+
+  document.getElementById('ss-detail-member').textContent = member ? (member.full_name || member.email) : 'Unknown member';
+  document.getElementById('ss-detail-video').textContent  = video ? `Week ${video.week_number || 1} — ${video.title}` : 'Unknown video';
+  document.getElementById('ss-detail-date').textContent   = 'Submitted ' + (sub.submitted_at ? new Date(sub.submitted_at).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }) : '—');
+
+  const content = sub.content || '(no content saved)';
+  document.getElementById('ss-detail-content').textContent = content;
+
+  // If the submission is (or contains) a URL, surface a clickable open-link button too.
+  const linkEl = document.getElementById('ss-detail-link');
+  const urlMatch = content.match(/https?:\/\/[^\s]+/);
+  if (urlMatch) {
+    linkEl.href = urlMatch[0];
+    linkEl.style.display = 'inline-block';
+  } else {
+    linkEl.style.display = 'none';
+  }
+
+  document.getElementById('spark-sub-detail-modal').classList.add('open');
+}
+
 function renderSparkSubmissions() {
   const table = document.getElementById('spark-sub-table');
   const { members, videos, subMap } = sparkSubTrackerData;
@@ -1870,7 +1921,7 @@ function renderSparkSubmissions() {
         <div style="font-size:11px;color:var(--muted)">${r.member.email || ''}</div>
       </td>
       ${r.cells.map(c => c.sub
-        ? `<td style="color:var(--green);font-size:12px;" title="${(c.sub.content||'').replace(/"/g,'&quot;')}">✅<br/><span style="font-size:10px;color:var(--muted)">${(c.sub.submitted_at||'').split('T')[0]}</span></td>`
+        ? `<td style="color:var(--green);font-size:12px;"><button class="ss-cell-btn" onclick="openSparkSubDetail('${r.member.id}','${c.video.id}')" title="Click to view full submission">✅<br/><span style="font-size:10px;color:var(--muted)">${(c.sub.submitted_at||'').split('T')[0]}</span></button></td>`
         : `<td style="color:var(--red);text-align:center;">—</td>`
       ).join('')}
       <td style="font-weight:700;${r.submittedCount === videos.length ? 'color:var(--green)' : ''}">${r.submittedCount}/${videos.length}</td>
