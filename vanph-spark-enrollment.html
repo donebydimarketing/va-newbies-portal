@@ -49,7 +49,7 @@
     background: var(--black);
     color: var(--white);
     text-align: center;
-    padding: 12px 20px;
+    padding: 13px 20px;
     font-size: 13px;
     letter-spacing: 0.4px;
   }
@@ -75,32 +75,63 @@
   .hero p.sub {
     font-size: 16px;
     color: var(--mid);
-    max-width: 480px;
+    max-width: 500px;
     margin: 0 auto;
   }
 
-  .date-strip {
-    display: flex;
+  /* ANNIVERSARY ANCHOR */
+  .anniv {
     border: 2px solid var(--black);
     margin-bottom: 48px;
-  }
-  .date-strip .cell {
-    flex: 1;
-    padding: 20px;
     text-align: center;
+    padding: 30px 24px;
   }
-  .date-strip .cell:first-child { border-right: 1px solid var(--black); }
-  .date-strip .cell .k {
+  .anniv .k {
     font-size: 11px;
-    letter-spacing: 1.5px;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
     color: var(--mid);
-    margin-bottom: 6px;
+    margin-bottom: 16px;
   }
-  .date-strip .cell .v {
+  .anniv .prices {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .anniv .was {
     font-family: 'Playfair Display', serif;
+    font-size: 30px;
     font-weight: 700;
-    font-size: 20px;
+    color: var(--mid);
+    text-decoration: line-through;
+  }
+  .anniv .now {
+    font-family: 'Playfair Display', serif;
+    font-size: 58px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .anniv .save {
+    display: inline-block;
+    background: var(--black);
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    margin-top: 14px;
+  }
+  .anniv .note {
+    font-size: 13.5px;
+    color: var(--mid);
+    margin-top: 16px;
+    line-height: 1.6;
+    max-width: 430px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   h2.section-title {
@@ -116,6 +147,33 @@
 
   .why-now p { font-size: 15px; margin-bottom: 14px; }
   .why-now p:last-child { margin-bottom: 0; }
+  .why-now p strong { font-weight: 700; }
+
+  /* FREE VS SPARK */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1.5px solid var(--border);
+  }
+  .split-col { padding: 22px; }
+  .split-col.a { border-right: 1.5px solid var(--border); background: var(--panel); }
+  .split-col h4 {
+    font-size: 11.5px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    color: var(--mid);
+  }
+  .split-col.b h4 { color: var(--black); }
+  .split-col ul { list-style: none; }
+  .split-col li {
+    font-size: 13.5px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0,0,0,.07);
+    line-height: 1.45;
+  }
+  .split-col li:last-child { border-bottom: none; }
+  .split-col.b li { font-weight: 600; }
 
   .qualify-banner {
     border: 2px solid var(--black);
@@ -143,7 +201,7 @@
   .qualify-col ul { list-style: none; }
   .qualify-col li {
     display: flex;
-    gap: 8px;
+    gap: 9px;
     font-size: 13.5px;
     margin-bottom: 10px;
     line-height: 1.45;
@@ -152,8 +210,9 @@
   .qualify-col .mk { flex-shrink: 0; font-weight: 700; }
 
   @media (max-width: 600px) {
-    .qualify-grid { grid-template-columns: 1fr; }
+    .qualify-grid, .split { grid-template-columns: 1fr; }
     .qualify-col.yes { border-right: none; border-bottom: 1.5px solid var(--border); }
+    .split-col.a { border-right: none; border-bottom: 1.5px solid var(--border); }
   }
 
   .inclusion-list { list-style: none; }
@@ -173,7 +232,7 @@
   .price-panel {
     background: var(--black);
     color: var(--white);
-    padding: 32px;
+    padding: 34px 32px;
     text-align: center;
     margin-bottom: 48px;
   }
@@ -182,15 +241,39 @@
     letter-spacing: 2px;
     text-transform: uppercase;
     color: #b8b8b8;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+  }
+  .price-panel .row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .price-panel .was {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #8a8a8a;
+    text-decoration: line-through;
   }
   .price-panel .amount {
     font-family: 'Playfair Display', serif;
     font-weight: 900;
-    font-size: 48px;
+    font-size: 52px;
+    line-height: 1;
   }
-  .price-panel .dur { font-size: 14px; color: #b8b8b8; margin-top: 6px; }
-  .price-panel .note { font-size: 12.5px; color: #d6d6d2; margin-top: 14px; }
+  .price-panel .dur { font-size: 14px; color: #b8b8b8; margin-top: 10px; }
+  .price-panel .note { font-size: 12.5px; color: #d6d6d2; margin-top: 16px; }
+  .price-panel .flag {
+    display: inline-block;
+    border: 1px solid var(--white);
+    font-size: 10.5px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    margin-top: 16px;
+  }
 
   .gcash-card {
     background: var(--panel);
@@ -313,9 +396,8 @@
     header { padding: 18px 20px; }
     .hero h1 { font-size: 32px; }
     .wrap { padding: 40px 18px 80px; }
-    .price-panel .amount { font-size: 36px; }
-    .date-strip { flex-direction: column; }
-    .date-strip .cell:first-child { border-right: none; border-bottom: 1px solid var(--black); }
+    .price-panel .amount { font-size: 40px; }
+    .anniv .now { font-size: 46px; }
   }
 </style>
 </head>
@@ -327,7 +409,7 @@
 </header>
 
 <div class="urgency-bar">
-  &#9889; <strong>Slots are moving fast.</strong> People have been waiting on this batch for 3 months.
+  <strong>VA Newbies PH turns 5.</strong> To celebrate, &#8369;500 off Spark enrollment.
 </div>
 
 <!-- PAGE 1: LANDING + PAYMENT -->
@@ -337,14 +419,52 @@
     <div class="hero">
       <div class="eyebrow">Spark Enrollment</div>
       <h1>Go from trained to placed.</h1>
-      <p class="sub">Spark gets you a host client, live coaching, and a direct path toward Vaulted VA. This page has everything you need, including how to pay.</p>
+      <p class="sub">Spark pairs you with a real foreign host client, puts you inside their operations, and gives you something to point at when a client asks what you have actually done.</p>
+    </div>
+
+    <!-- ANNIVERSARY ANCHOR -->
+    <div class="anniv">
+      <div class="k">Five years of training Filipino VAs</div>
+      <div class="prices">
+        <div class="was">&#8369;2,500</div>
+        <div class="now">&#8369;2,000</div>
+      </div>
+      <div class="save">Save &#8369;500</div>
+      <div class="note">We started in 2021. Five years on, this is our thank you. Every Spark enrollment is &#8369;500 off.</div>
     </div>
 
     <section class="why-now">
-      <h2 class="section-title">Why the Rush</h2>
-      <p>Spark has been closed for 3 months while Starter ran its own batch. Everyone who has been asking "when does Spark open again" has been pointed to this exact page.</p>
-      <p>That means this batch is not opening to a cold audience. It is opening to a backlog of people who already decided they want in and have just been waiting for the date. Slots will not sit open for long.</p>
-      <p>Enrollment closes as soon as the batch is full, not on a fixed date, so the people who pay first are the people who get in.</p>
+      <h2 class="section-title">Why Now</h2>
+      <p><strong>Because studying is not the same as doing.</strong> You can finish every free course available and still freeze the moment a real client asks you a question. The gap is not knowledge. It is that nobody has ever handed you real work and held you to it.</p>
+      <p><strong>Because the queue behind you is getting longer.</strong> Virtual assistant is now the number one dream job in the Philippines. Most of the people applying next to you are doing exactly what you have been doing. Collecting certificates. Hoping someone takes a chance on them.</p>
+      <p><strong>Because &#8369;500 off only happens once.</strong> We turn 5 once. The discount comes off now, and the price goes back to &#8369;2,500 when the celebration ends.</p>
+    </section>
+
+    <section>
+      <h2 class="section-title">What Free Cannot Give You</h2>
+      <p style="font-size:15px;margin-bottom:18px;">Coach Di gives away a lot and she wants you to use all of it. The planner, the Monday Drop, the Saturday live, the YouTube library. Take every bit. There is one thing none of it can hand you.</p>
+      <div class="split">
+        <div class="split-col a">
+          <h4>Everything free gives you</h4>
+          <ul>
+            <li>Lessons and tutorials</li>
+            <li>Tools to learn on your own</li>
+            <li>A map to follow</li>
+            <li>Answers to your questions</li>
+            <li>Practice with no stakes</li>
+          </ul>
+        </div>
+        <div class="split-col b">
+          <h4>What Spark adds</h4>
+          <ul>
+            <li>A real foreign client</li>
+            <li>Work that matters to someone</li>
+            <li>Deadlines you have to hit</li>
+            <li>Submissions that get approved or sent back</li>
+            <li>Proof you can actually do the job</li>
+          </ul>
+        </div>
+      </div>
     </section>
 
     <section>
@@ -354,23 +474,23 @@
         <div class="qualify-col yes">
           <h4>You Belong in Spark If</h4>
           <ul>
-            <li><span class="mk">—</span><span>You have a computer and stable internet</span></li>
-            <li><span class="mk">—</span><span>You can commit at least 2 hours every training day</span></li>
-            <li><span class="mk">—</span><span>You can commit up to 4 hours max per day once paired with a client</span></li>
-            <li><span class="mk">—</span><span>You finished Starter or already have an equivalent foundation</span></li>
-            <li><span class="mk">—</span><span>You are ready to be evaluated by a real client, not just a coach</span></li>
-            <li><span class="mk">—</span><span>You will follow VANPH policies and protocols without needing reminders</span></li>
-            <li><span class="mk">—</span><span>You are 18 or older</span></li>
+            <li><span class="mk">&#10003;</span><span>You have a computer and stable internet</span></li>
+            <li><span class="mk">&#10003;</span><span>You can commit at least 2 hours every training day</span></li>
+            <li><span class="mk">&#10003;</span><span>You can commit up to 4 hours max per day once paired with a client</span></li>
+            <li><span class="mk">&#10003;</span><span>You are willing to start from zero and be taught. Starter is not required</span></li>
+            <li><span class="mk">&#10003;</span><span>You are ready to be evaluated by a real client, not just a coach</span></li>
+            <li><span class="mk">&#10003;</span><span>You will follow VA Newbies PH policies and protocols without needing reminders</span></li>
+            <li><span class="mk">&#10003;</span><span>You are 18 or older</span></li>
           </ul>
         </div>
         <div class="qualify-col no">
           <h4>You Do NOT Belong If</h4>
           <ul>
-            <li><span class="mk">—</span><span>You don't have reliable access to a computer or internet</span></li>
-            <li><span class="mk">—</span><span>You can't realistically give at least 2 hours daily during training</span></li>
-            <li><span class="mk">—</span><span>You are looking for guaranteed income, not real experience</span></li>
-            <li><span class="mk">—</span><span>You expect a refund if it doesn't work out for you</span></li>
-            <li><span class="mk">—</span><span>You skipped the fundamentals and are not ready for a live client</span></li>
+            <li><span class="mk">&#10007;</span><span>You do not have reliable access to a computer or internet</span></li>
+            <li><span class="mk">&#10007;</span><span>You cannot realistically give at least 2 hours daily during training</span></li>
+            <li><span class="mk">&#10007;</span><span>You are looking for guaranteed income, not real experience</span></li>
+            <li><span class="mk">&#10007;</span><span>You expect a refund if it does not work out for you</span></li>
+            <li><span class="mk">&#10007;</span><span>You are not willing to be corrected on your work</span></li>
           </ul>
         </div>
       </div>
@@ -386,7 +506,7 @@
         </div>
         <div class="gcash-step">
           <div class="gcash-num">2</div>
-          <div class="gcash-text">Make sure you're a member of the VANPH Facebook group. If you're not in yet, request to join now, don't wait until training starts.</div>
+          <div class="gcash-text">Make sure you are a member of the VA Newbies PH Facebook group. If you are not in yet, request to join now, do not wait until training starts.</div>
         </div>
         <div class="gcash-step">
           <div class="gcash-num">3</div>
@@ -398,24 +518,28 @@
     <section>
       <h2 class="section-title">What's Included</h2>
       <ul class="inclusion-list">
-        <li><span class="mark">—</span><span>3 months full portal access</span></li>
-        <li><span class="mark">—</span><span>1 Foreign Client Host, with waitlist priority if you're left over from an assignment round</span></li>
-        <li><span class="mark">—</span><span>3 monthly group coaching calls</span></li>
-        <li><span class="mark">—</span><span>One-on-one coaching with Coach Di</span></li>
-        <li><span class="mark">—</span><span>VIP group access</span></li>
-        <li><span class="mark">—</span><span>Exclusive Discord access</span></li>
-        <li><span class="mark">—</span><span>Potential gateway invitation to Vaulted VA</span></li>
-        <li><span class="mark">—</span><span>All Starter materials and modules included</span></li>
-        <li><span class="mark">—</span><span>Full video library of Coach Di's lessons</span></li>
-        <li><span class="mark">—</span><span>Access to Coach Di's personal internship pool</span></li>
-        <li><span class="mark">—</span><span>The VA Newbies Handbook with Policies and Best Practices</span></li>
+        <li><span class="mark">&#10003;</span><span>3 months full portal access</span></li>
+        <li><span class="mark">&#10003;</span><span>1 Foreign Client Host, with waitlist priority if you are left over from an assignment round</span></li>
+        <li><span class="mark">&#10003;</span><span>3 monthly group coaching calls</span></li>
+        <li><span class="mark">&#10003;</span><span>One-on-one coaching with Coach Di</span></li>
+        <li><span class="mark">&#10003;</span><span>VIP group access</span></li>
+        <li><span class="mark">&#10003;</span><span>Exclusive Discord access</span></li>
+        <li><span class="mark">&#10003;</span><span>Potential gateway invitation to Vaulted VA</span></li>
+        <li><span class="mark">&#10003;</span><span>All Starter materials and modules included</span></li>
+        <li><span class="mark">&#10003;</span><span>Full video library of Coach Di's lessons</span></li>
+        <li><span class="mark">&#10003;</span><span>Access to Coach Di's personal internship pool</span></li>
+        <li><span class="mark">&#10003;</span><span>The VA Newbies Handbook with Policies and Best Practices</span></li>
       </ul>
     </section>
 
     <div class="price-panel">
       <div class="label">Spark Enrollment Fee</div>
-      <div class="amount">&#8369;2,500</div>
+      <div class="row">
+        <div class="was">&#8369;2,500</div>
+        <div class="amount">&#8369;2,000</div>
+      </div>
       <div class="dur">for 3 months access</div>
+      <div class="flag">5th Year Celebration &#8369;500 Off</div>
       <div class="note">Your spot is only secured once payment is submitted and confirmed.</div>
     </div>
 
@@ -437,11 +561,11 @@
         </div>
         <div class="gcash-step">
           <div class="gcash-num">4</div>
-          <div class="gcash-text">Amount to send:<strong>&#8369;2,500</strong></div>
+          <div class="gcash-text">Amount to send:<strong>&#8369;2,000</strong></div>
         </div>
         <div class="gcash-step">
           <div class="gcash-num">5</div>
-          <div class="gcash-text">Use your full name as the reference/note, and screenshot the confirmation. You'll upload it on the next page.</div>
+          <div class="gcash-text">Use your full name as the reference/note, and screenshot the confirmation. You will upload it on the next page.</div>
         </div>
       </div>
 
@@ -454,16 +578,28 @@
     <section>
       <h2 class="section-title">Quick Answers</h2>
       <div class="faq-item">
+        <div class="q">Do I need to finish Starter first?</div>
+        <div class="a">No. Starter is not a requirement, and all the Starter materials are included in Spark anyway. Come in as a beginner if that is where you are.</div>
+      </div>
+      <div class="faq-item">
+        <div class="q">Do I need experience?</div>
+        <div class="a">No. Most people who join have never worked with a client. That is the whole point of Spark.</div>
+      </div>
+      <div class="faq-item">
+        <div class="q">What if I am bad at it at first?</div>
+        <div class="a">You will be, and so was everyone. Better your first rejections happen here, with Coach Di watching, than with a paying client who simply stops replying.</div>
+      </div>
+      <div class="faq-item">
         <div class="q">What happens after I submit payment?</div>
         <div class="a">Screenshot your GCash confirmation and send it to our Facebook page via DM, along with the details on the next page. Once confirmed, an admin will tag you and let you into the VIP Facebook group.</div>
       </div>
       <div class="faq-item">
-        <div class="q">What if slots fill before I finish paying?</div>
-        <div class="a">Enrollment closes the moment the batch is full. There is no guaranteed hold once you leave this page without paying.</div>
+        <div class="q">When do I get paired with a host client?</div>
+        <div class="a">You will have 2 to 3 weeks to finish your requirements. If you finish on time, you are paired with a host client in the first pairing batch. If you do not finish in time, you move to the next pairing batch, which opens 3 weeks after the first. Members still not ready by then move to the third batch.</div>
       </div>
       <div class="faq-item">
-        <div class="q">When do I get paired with a host client?</div>
-        <div class="a">You'll have 2 to 3 weeks to finish your requirements. If you finish on time, you're paired with a host client in the first pairing batch. If you don't finish in time, you move to the next pairing batch, which opens 3 weeks after the first. Members still not ready by then move to the third batch.</div>
+        <div class="q">How long does the &#8369;500 off last?</div>
+        <div class="a">It runs for the 5th year celebration. When it ends, Spark goes back to &#8369;2,500.</div>
       </div>
     </section>
 
@@ -527,7 +663,7 @@
     <h2>You're In the Queue</h2>
     <p>Your Spark enrollment has been submitted and is pending review.</p>
     <p>Make sure you've also sent your payment screenshot to our Facebook page via DM. Once confirmed, an admin will tag you and let you into the VIP Facebook group.</p>
-    <p>Before then: check your email regularly, make sure you're a member of the VANPH Facebook group, and check your Facebook inbox regularly. That's how we'll reach you.</p>
+    <p>Before then: check your email regularly, make sure you're a member of the VA Newbies PH Facebook group, and check your Facebook inbox regularly. That's how we'll reach you.</p>
   </div>
 </div>
 
